@@ -132,7 +132,7 @@ class LecturerDashboard {
             $tableBody.innerHTML = '<tr><td colspan="4">Please select a student to view grades</td></tr>';
           }
         } else {
-          this.fetchGrades();
+        this.fetchGrades();
         }
       } else if (sectionId === 'manageAttendance') {
         this.fetchAttendance();
@@ -558,15 +558,29 @@ class LecturerDashboard {
             return;
         }
 
-        // Group attendance data by week
+        // Filter out invalid records and group by week
         const weeklyData = {};
         const studentNames = new Set();
 
+        // First pass: collect valid student names
         attendanceData.forEach(record => {
-            if (!record.date || !record.student_name) return;
+            if (record?.student_name) {
+                studentNames.add(record.student_name);
+            }
+        });
+
+        if (studentNames.size === 0) {
+            console.warn("[Analytics] No valid student data found for attendance chart");
+            return;
+        }
+
+        // Second pass: process attendance data
+        attendanceData.forEach(record => {
+            if (!record?.date || !record?.student_name) return;
             
-            studentNames.add(record.student_name);
             const date = new Date(record.date);
+            if (isNaN(date.getTime())) return; // Skip invalid dates
+            
             const weekNumber = this.getWeekNumber(date);
             const weekKey = `${date.getFullYear()}-W${weekNumber}`;
             
@@ -578,13 +592,18 @@ class LecturerDashboard {
             }
             
             weeklyData[weekKey][record.student_name].total++;
-            if (record.status.toLowerCase() === 'present') {
+            if (record.status?.toLowerCase() === 'present') {
                 weeklyData[weekKey][record.student_name].present++;
             }
         });
 
         // Prepare chart data
         const weeks = Object.keys(weeklyData).sort();
+        if (weeks.length === 0) {
+            console.warn("[Analytics] No weekly data available for attendance chart");
+            return;
+        }
+
         const datasets = Array.from(studentNames).map(studentName => {
             const data = weeks.map(week => {
                 const weekData = weeklyData[week][studentName];
@@ -600,31 +619,37 @@ class LecturerDashboard {
             };
         });
 
-        // Update chart
-        this.attendanceChart.data.labels = weeks.map(week => {
-            const [year, weekNum] = week.split('-W');
-            return `Week ${weekNum}, ${year}`;
-        });
-        this.attendanceChart.data.datasets = datasets;
-        
-        // Configure chart options
+        // Update chart configuration
+        this.attendanceChart.data = {
+            labels: weeks.map(week => `Week ${week.split('-W')[1]}`),
+            datasets: datasets
+        };
+
         this.attendanceChart.options = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
-                    text: 'Weekly Attendance Trends',
+                    text: 'Attendance Trends by Week',
                     font: {
-                        size: 16
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
                     }
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
                     callbacks: {
                         label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                            return `${context.dataset.label}: ${Math.round(context.raw)}% attendance`;
                         }
                     }
                 }
@@ -765,6 +790,16 @@ class LecturerDashboard {
       const firstDay = new Date(date.getFullYear(), 0, 1);
       const dayDiff = (date - firstDay) / (24 * 60 * 60 * 1000);
       return Math.ceil((dayDiff + firstDay.getDay() + 1) / 7);
+    }
+  
+    // Generate a random color for chart lines
+    getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
     }
   
     // FORM HANDLERS

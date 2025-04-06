@@ -66,21 +66,20 @@
             <div class="chart-container">
               <canvas id="attendanceChart"></canvas>
             </div>
-            <div class="attendance-summary">
+            <div class="attendance-summary mt-3">
               <!-- Will be populated dynamically -->
             </div>
           </div>
         </div>
 
         <!-- Grades Table -->
-        <div class="analytics-card">
+        <div class="analytics-card mt-4">
           <h3>Detailed Grades</h3>
           <div class="table-responsive">
-            <table id="gradesTable">
+            <table id="gradesTable" class="table">
               <thead>
                 <tr>
                   <th>Subject</th>
-                  <th>Score</th>
                   <th>Grade</th>
                 </tr>
               </thead>
@@ -101,19 +100,82 @@
           <div class="analytics-card">
             <h3>Download Reports</h3>
             <div class="export-options">
-              <button class="btn-primary">
-                <i class="fas fa-file-pdf"></i> Export Grades Report
+              <button id="exportPDF" class="btn-primary">
+                <i class="fas fa-file-pdf"></i> Export Report as PDF
+                <span class="loading-spinner d-none">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
               </button>
-              <button class="btn-primary">
-                <i class="fas fa-file-pdf"></i> Export Attendance Report
+              <button id="exportCSV" class="btn-primary">
+                <i class="fas fa-file-csv"></i> Export Report as CSV
+                <span class="loading-spinner d-none">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
               </button>
-              <button class="btn-primary">
-                <i class="fas fa-file-csv"></i> Export Full Report (CSV)
-              </button>
+            </div>
+            <div class="export-info mt-4">
+              <h4>About the Reports</h4>
+              <ul>
+                <li><strong>PDF Report:</strong> Complete report with grades and attendance data, formatted for printing.</li>
+                <li><strong>CSV Report:</strong> Complete dataset in spreadsheet format, suitable for further analysis.</li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
+    </div>
+  </div>
+
+  <!-- Print Sections (Hidden) -->
+  <div id="printFullReport" class="print-section" style="display: none;">
+    <div class="print-header">
+      <h1>Student Academic Report</h1>
+      <p class="generation-date"></p>
+    </div>
+    
+    <div class="student-info">
+      <!-- Will be populated dynamically -->
+    </div>
+    
+    <div class="report-section">
+      <h2>Academic Performance</h2>
+      <div class="gpa-info">
+        <!-- Will be populated dynamically -->
+      </div>
+      <table class="grades-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="report-section">
+      <h2>Attendance Record</h2>
+      <div class="attendance-summary-print">
+        <!-- Will be populated dynamically -->
+      </div>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="print-footer">
+      <p>Generated on <span class="generation-date"></span></p>
+      <p>This is an official academic report. Please handle with care.</p>
     </div>
   </div>
 
