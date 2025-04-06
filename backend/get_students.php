@@ -19,83 +19,60 @@ require_once 'db_connection.php';
 // Debug session variables
 error_log("Session variables: " . print_r($_SESSION, true));
 
-// Check if user is logged in and has a role
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+// Check if user is logged in and is an admin or lecturer
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || 
+    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'lecturer')) {
     http_response_code(401);
-    die(json_encode([
+    echo json_encode([
         'success' => false, 
-        'message' => 'Unauthorized. Please log in again.',
-        'debug' => ['session_status' => session_status(), 'session_id' => session_id()]
-    ]));
+        'message' => 'Unauthorized access'
+    ]);
+    exit;
 }
 
 try {
-    $user_id = $_SESSION['user_id'];
-    $role = $_SESSION['role'];
+    // Get all students with their course information
+    $query = "
+        SELECT s.student_id, s.name, s.email, s.course, s.created_at,
+               CASE WHEN u.user_id IS NOT NULL THEN 'Active' ELSE 'Inactive' END as status
+        FROM students s
+        LEFT JOIN users u ON s.user_id = u.user_id
+        ORDER BY s.student_id DESC
+    ";
     
-    error_log("User ID: $user_id, Role: $role");
+    $result = $conn->query($query);
     
-    // For LECTURERS/ADMINS: Return all students
-    if ($role === 'lecturer' || $role === 'admin') {
-        $stmt = $conn->prepare("
-            SELECT 
-                s.student_id, 
-                s.name, 
-                s.email, 
-                s.course,
-                s.created_at
-            FROM students s
-            ORDER BY s.name ASC
-        ");
-        
-        $stmt->execute();
-        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!$result) {
+        throw new Exception($conn->error);
+    }
+    
+    $students = [];
+    while ($row = $result->fetch_assoc()) {
+        $students[] = [
+            'student_id' => $row['student_id'],
+            'name' => $row['name'],
+            'email' => $row['email'],
+            'course' => $row['course'],
+            'status' => $row['status'],
+            'created_at' => $row['created_at']
+        ];
+    }
         
         echo json_encode([
             'success' => true,
-            'students' => $students
-        ]);
-        exit;
-    }
+        'data' => $students
+    ]);
     
-    // For STUDENTS: Return only their own information
-    else if ($role === 'student') {
-        $stmt = $conn->prepare("
-            SELECT 
-                student_id, 
-                name, 
-                email, 
-                course,
-                created_at
-            FROM students 
-            WHERE user_id = ?
-        ");
-        $stmt->execute([$user_id]);
-        $student = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        echo json_encode([
-            'success' => true,
-            'students' => $student ? [$student] : []
-        ]);
-        exit;
-    } else {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid role'
-        ]);
-        exit;
-    }
-} catch(Exception $e) {
+} catch (Exception $e) {
     error_log("Error in get_students.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error occurred',
-        'debug' => $e->getMessage()
+        'message' => 'Failed to load students: ' . $e->getMessage()
     ]);
-    exit;
 }
+
+$conn->close();
 
 // Debugging
 error_log("Session user_id: " . $_SESSION['user_id']);

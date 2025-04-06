@@ -9,39 +9,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-$host = getenv('DB_HOST') ?: 'localhost';
-$db   = getenv('DB_NAME') ?: 'student_info_system';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
-$charset = 'utf8mb4';
+$host = 'localhost';
+$username = 'root';
+$password = '';
+$database = 'student_info_system';
 
-// Connection options
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-    PDO::ATTR_TIMEOUT            => 5
-];
+// Create connection
+$conn = new mysqli($host, $username, $password, $database);
 
-try {
-    // Create connection
-    $conn = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
-    
-    // Verify connection works immediately
-    $conn->query("SELECT 1")->fetch();
-    
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed. Please try again later.',
-        'debug' => [
-            'code' => $e->getCode(),
-            'message' => $e->getMessage()
-        ]
-    ]);
-    exit;
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+
+// Set charset to utf8mb4
+$conn->set_charset("utf8mb4");
 
 // Ensure clean output
 ob_clean();

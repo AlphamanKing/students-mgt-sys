@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 05, 2025 at 03:45 PM
+-- Generation Time: Apr 07, 2025 at 12:13 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -39,14 +39,19 @@ CREATE TABLE `attendance` (
 --
 
 INSERT INTO `attendance` (`attendance_id`, `student_id`, `date`, `status`) VALUES
-(7, 10, '2025-03-02', 'Absent'),
-(8, 10, '2025-03-03', 'Present'),
-(9, 10, '2025-03-04', 'Present'),
-(10, 10, '2025-03-05', 'Present'),
-(11, 10, '2025-03-06', 'Absent'),
+(7, 10, '2025-03-01', 'Present'),
+(8, 10, '2025-03-04', 'Present'),
 (13, 16, '2025-04-24', 'Present'),
 (14, 16, '2025-05-08', 'Absent'),
-(15, 16, '2025-04-15', 'Present');
+(15, 16, '2025-04-15', 'Present'),
+(19, 20, '2025-04-10', 'Present'),
+(20, 21, '2025-04-08', 'Present'),
+(21, 21, '2025-04-10', 'Present'),
+(22, 21, '2025-04-14', 'Absent'),
+(24, 20, '2025-04-11', 'Absent'),
+(25, 21, '2025-04-09', 'Present'),
+(26, 13, '2025-04-09', 'Present'),
+(27, 21, '2025-04-17', 'Present');
 
 -- --------------------------------------------------------
 
@@ -70,12 +75,44 @@ INSERT INTO `grades` (`grade_id`, `student_id`, `subject`, `grade`) VALUES
 (8, 10, 'Database Systems', 'A'),
 (9, 10, 'Networking', 'C'),
 (10, 10, 'Software Engineering', 'B'),
-(12, 13, 'Software Engineering', 'A'),
+(12, 13, 'Software Engineering', 'B'),
 (13, 14, 'Networking', 'F'),
 (15, 14, 'Database Systems', 'A'),
 (16, 10, 'Software Engineering', 'A'),
 (17, 16, 'Software Engineering', 'A'),
-(18, 16, 'Database systems', 'F');
+(18, 16, 'Database systems', 'C'),
+(19, 20, 'Calculus II', 'A'),
+(21, 21, 'cryptography and security', 'A'),
+(23, 21, 'database', 'B'),
+(24, 21, 'softwares', 'A'),
+(26, 21, 'Software Quality Assurance', 'A'),
+(27, 13, 'mathematics', 'C');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lecturers`
+--
+
+CREATE TABLE `lecturers` (
+  `lecturer_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `lecturers`
+--
+
+INSERT INTO `lecturers` (`lecturer_id`, `user_id`, `name`, `email`, `department`, `created_at`) VALUES
+(1, 5, 'Lecturer User', 'lecturer@example.com', 'Computer Science', '2025-03-09 11:20:30'),
+(2, 26, 'Rachael', 'Rachael@gmail.com', 'Computer Science', '2025-03-31 11:42:07'),
+(3, 31, 'Eugene Gudi', 'eugenegudi3@gmai.com', 'Computer Science', '2025-04-03 13:36:04'),
+(4, 33, 'halisi juma', 'juma@gmail.com', 'Computer Science', '2025-04-06 10:47:59'),
+(8, 38, 'magambo', 'magambo@gmail.com', 'IT', '2025-04-06 22:06:29');
 
 -- --------------------------------------------------------
 
@@ -128,8 +165,9 @@ INSERT INTO `students` (`student_id`, `user_id`, `name`, `email`, `course`, `cre
 (14, 24, 'Mumbua', 'star@gmail.com', 'BBIT', '2025-03-12 19:31:07'),
 (15, 25, 'Lavalava', 'Lava@gmail.com', '', '2025-03-15 15:37:16'),
 (16, 27, 'Mustapha Iddi', 'mustaphamustard876@gmail.com', 'Software Engineering', '2025-04-03 12:15:31'),
-(19, 30, 'lelele lelele', 'lele@gmail.com', 'BBIT', '2025-04-03 13:09:49'),
-(20, 32, 'John Wahome', 'wahome@gmail.com', 'Computer Science', '2025-04-05 13:23:30');
+(20, 32, 'John Wahome', 'wahome@gmail.com', 'Computer Science', '2025-04-05 13:23:30'),
+(21, 34, 'student1', 'student1@gmail.com', 'Computer Science', '2025-04-06 15:16:27'),
+(22, 36, 'julius kiruka', 'kiruka@gmail.com', 'Math & comp sccience', '2025-04-06 21:53:28');
 
 -- --------------------------------------------------------
 
@@ -168,9 +206,14 @@ INSERT INTO `users` (`user_id`, `name`, `email`, `password`, `role`, `created_at
 (25, 'Lavalava', 'Lava@gmail.com', '$2y$10$14fJuvvtPlCuSTOcSwN/SOaHcqd9QHLD7vx/KOAWQOp1.G8wSHam6', 'student', '2025-03-15 15:37:16'),
 (26, 'Rachael', 'Rachael@gmail.com', '$2y$10$rgisZhwrrwowkzfU9e95tOHnan0nkbocJgimL.VZlg0B5dXoMj8L.', 'lecturer', '2025-03-31 11:42:07'),
 (27, 'Mustapha Iddi', 'mustaphamustard876@gmail.com', '$2y$10$7XRJXlTJB.7PPh2A3jIxnOT5lH/5ovI9REmJyXxVk9XfU7WIHqKBu', 'student', '2025-04-03 12:15:31'),
-(30, 'lelele lelele', 'lele@gmail.com', '$2y$10$IwZFH6Psj/h6XhM9Q5H40.gEiIDWZGHgO/lTRcTUzvWCYz0LmyYBO', 'student', '2025-04-03 13:09:49'),
+(30, 'lelele lelema', 'lele@gmail.com', '$2y$10$IwZFH6Psj/h6XhM9Q5H40.gEiIDWZGHgO/lTRcTUzvWCYz0LmyYBO', 'student', '2025-04-03 13:09:49'),
 (31, 'Eugene Gudi', 'eugenegudi3@gmai.com', '$2y$10$m3SXIYKJDB9kNZ963p13DuAYY..DfzGlx9wyO6XbGV2oNsBGbHSlq', 'lecturer', '2025-04-03 13:36:04'),
-(32, 'John Wahome', 'wahome@gmail.com', '$2y$10$g.DFpW8etSDk6AGP2rtjeuf5PybNF9nFf9LTCOuiYJO56Swn93ZmC', 'student', '2025-04-05 13:23:30');
+(32, 'John Wahome', 'wahome@gmail.com', '$2y$10$g.DFpW8etSDk6AGP2rtjeuf5PybNF9nFf9LTCOuiYJO56Swn93ZmC', 'student', '2025-04-05 13:23:30'),
+(33, 'halisi juma', 'juma@gmail.com', '$2y$10$u2f88yvIaeClVlceMGAEler7gbuIcxypmpLWXSLkNSUmdZl8qsd.K', 'lecturer', '2025-04-06 10:47:59'),
+(34, 'student1', 'student1@gmail.com', '$2y$10$9chy44HggRsIeE0CleZ4reRDG5en7xVzOPxhIeV60NPovouhw9/wO', 'student', '2025-04-06 15:16:27'),
+(35, 'admin', 'admin@test.com', '$2y$10$GG.lN2qEWwZ5EoBwu6czcOHNpkKPQSbzhFLkroKK9VNeqT6/Dar/G', 'admin', '2025-04-06 21:21:43'),
+(36, 'julius kiruka', 'kiruka@gmail.com', '$2y$10$1mNSM5U8KDGVYMGfnY0uHeMK5wsu446VyKCFNYodekdGw170vntUq', 'student', '2025-04-06 21:53:28'),
+(38, 'magambo', 'magambo@gmail.com', '$2y$10$NjsrS0VvrWtwGJgAyuK/Ue68nKCb9UqGkM4nbvRVmPEpMbzxGb.S.', 'lecturer', '2025-04-06 22:06:29');
 
 --
 -- Indexes for dumped tables
@@ -189,6 +232,14 @@ ALTER TABLE `attendance`
 ALTER TABLE `grades`
   ADD PRIMARY KEY (`grade_id`),
   ADD KEY `student_id` (`student_id`);
+
+--
+-- Indexes for table `lecturers`
+--
+ALTER TABLE `lecturers`
+  ADD PRIMARY KEY (`lecturer_id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `fk_user_id` (`user_id`);
 
 --
 -- Indexes for table `notifications`
@@ -219,13 +270,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `grades`
 --
 ALTER TABLE `grades`
-  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `grade_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- AUTO_INCREMENT for table `lecturers`
+--
+ALTER TABLE `lecturers`
+  MODIFY `lecturer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -237,13 +294,13 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- Constraints for dumped tables
@@ -260,6 +317,12 @@ ALTER TABLE `attendance`
 --
 ALTER TABLE `grades`
   ADD CONSTRAINT `grades_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`student_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `lecturers`
+--
+ALTER TABLE `lecturers`
+  ADD CONSTRAINT `lecturers_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `students`

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SIS</title>
+    <link rel="stylesheet" href="css/admin_dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>Admin Portal</h2>
+            <ul>
+                <li class="nav-item active" data-section="manage-students">
+                    <i class="fas fa-user-graduate"></i>
+                    Manage Students
+                </li>
+                <li class="nav-item" data-section="manage-lecturers">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Manage Lecturers
+                </li>
+                <li class="nav-item" data-section="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </li>
+                <li class="nav-item" data-section="system-settings">
+                    <i class="fas fa-cogs"></i>
+                    System Settings
+                </li>
+            </ul>
+        </div>
+
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div class="nav-title">Admin Dashboard</div>
+            <div class="profile-menu">
+                <div class="profile-circle"></div>
+                <div class="profile-dropdown">
+                    <div class="dropdown-header">
+                        <span class="name"></span>
+                        <span class="email"></span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item settings-btn">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                    <a href="#" class="dropdown-item logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Manage Students Section -->
+            <section id="manage-students" class="section active">
+                <div class="section-header">
+                    <h2>Manage Students</h2>
+                    <button class="add-btn" id="addStudentBtn">
+                        <i class="fas fa-plus"></i> Add New Student
+                    </button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="studentSearch" placeholder="Search students...">
+                    <select id="studentFilter">
+                        <option value="all">All Students</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Manage Lecturers Section -->
+            <section id="manage-lecturers" class="section">
+                <div class="section-header">
+                    <h2>Manage Lecturers</h2>
+                    <button class="add-btn" id="addLecturerBtn">
+                        <i class="fas fa-plus"></i> Add New Lecturer
+                    </button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="lecturerSearch" placeholder="Search lecturers...">
+                    <select id="lecturerFilter">
+                        <option value="all">All Lecturers</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table id="lecturersTable">
+                        <thead>
+                            <tr>
+                                <th>Lecturer ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="section">
+                <div class="section-header">
+                    <h2>System Analytics</h2>
+                </div>
+                <div class="analytics-grid">
+                    <!-- User Statistics Card -->
+                    <div class="analytics-card">
+                        <h3>User Statistics</h3>
+                        <div class="chart-container">
+                            <canvas id="userStatsChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Performance Overview Card -->
+                    <div class="analytics-card">
+                        <h3>Academic Performance</h3>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- System Usage Card -->
+                    <div class="analytics-card">
+                        <h3>System Usage</h3>
+                        <div class="chart-container">
+                            <canvas id="usageChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Quick Stats Card -->
+                    <div class="analytics-card">
+                        <h3>Quick Statistics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <i class="fas fa-user-graduate"></i>
+                                <span class="stat-value" id="totalStudents">0</span>
+                                <span class="stat-label">Total Students</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <span class="stat-value" id="totalLecturers">0</span>
+                                <span class="stat-label">Total Lecturers</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-book"></i>
+                                <span class="stat-value" id="totalCourses">0</span>
+                                <span class="stat-label">Total Courses</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span class="stat-value" id="activeUsers">0</span>
+                                <span class="stat-label">Active Users</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Settings Section -->
+            <section id="system-settings" class="section">
+                <div class="section-header">
+                    <h2>System Settings</h2>
+                </div>
+                <div class="settings-grid">
+                    <!-- General Settings -->
+                    <div class="settings-card">
+                        <h3>General Settings</h3>
+                        <form id="generalSettingsForm">
+                            <div class="form-group">
+                                <label>System Name</label>
+                                <input type="text" id="systemName" value="Student Information System">
+                            </div>
+                            <div class="form-group">
+                                <label>Academic Year</label>
+                                <input type="text" id="academicYear">
+                            </div>
+                            <div class="form-group">
+                                <label>Maintenance Mode</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="maintenanceMode">
+                                    <label for="maintenanceMode"></label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Email Settings -->
+                    <div class="settings-card">
+                        <h3>Email Settings</h3>
+                        <form id="emailSettingsForm">
+                            <div class="form-group">
+                                <label>SMTP Server</label>
+                                <input type="text" id="smtpServer">
+                            </div>
+                            <div class="form-group">
+                                <label>SMTP Port</label>
+                                <input type="number" id="smtpPort">
+                            </div>
+                            <div class="form-group">
+                                <label>Email From</label>
+                                <input type="email" id="emailFrom">
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Backup Settings -->
+                    <div class="settings-card">
+                        <h3>Backup Settings</h3>
+                        <form id="backupSettingsForm">
+                            <div class="form-group">
+                                <label>Auto Backup</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="autoBackup">
+                                    <label for="autoBackup"></label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Backup Frequency</label>
+                                <select id="backupFrequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <button type="button" class="backup-btn" id="manualBackupBtn">
+                                <i class="fas fa-download"></i> Manual Backup
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing students -->
+    <div class="modal" id="studentModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="studentModalTitle">Add New Student</h2>
+            <form id="studentForm">
+                <div class="form-group">
+                    <label for="studentName">Full Name</label>
+                    <input type="text" id="studentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentEmail">Email</label>
+                    <input type="email" id="studentEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentCourse">Course</label>
+                    <input type="text" id="studentCourse" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentPassword">Password</label>
+                    <input type="password" id="studentPassword">
+                    <small class="help-text">Leave empty to keep current password</small>
+                </div>
+                <div class="form-group">
+                    <label for="studentStatus">Status</label>
+                    <select id="studentStatus">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing lecturers -->
+    <div class="modal" id="lecturerModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="lecturerModalTitle">Add New Lecturer</h2>
+            <form id="lecturerForm">
+                <div class="form-group">
+                    <label for="lecturerName">Full Name</label>
+                    <input type="text" id="lecturerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lecturerEmail">Email</label>
+                    <input type="email" id="lecturerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="lecturerPassword">Password</label>
+                    <input type="password" id="lecturerPassword">
+                </div>
+                <div class="form-group">
+                    <label for="lecturerDepartment">Department</label>
+                    <input type="text" id="lecturerDepartment" required>
+                </div>
+                <div class="form-group">
+                    <label for="lecturerStatus">Status</label>
+                    <select id="lecturerStatus">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin_dashboard.js"></script>
+</body>
+</html> 

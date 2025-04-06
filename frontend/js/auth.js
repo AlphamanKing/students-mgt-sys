@@ -1,12 +1,50 @@
+// Role selector functionality
+document.querySelectorAll('.role-btn')?.forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        // Update hidden role input
+        document.getElementById('role').value = this.dataset.role;
+    });
+});
+
+// Password visibility toggle
+document.querySelector('.toggle-password')?.addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+
 // Login handler
 document.getElementById('loginForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
   
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
+    const role = document.getElementById('role').value;
+    const submitBtn = this.querySelector('.submit-btn');
     const messageBox = document.getElementById('formMessage');
+    
+    // Clear previous messages
     messageBox.textContent = '';
     messageBox.style.display = 'none';
+    messageBox.classList.remove('error', 'success');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Logging in...';
 
     console.log('Attempting login...');
     fetch('../backend/login.php', {
@@ -15,7 +53,7 @@ document.getElementById('loginForm')?.addEventListener('submit', function(e) {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
         credentials: 'include'
     })
     .then(response => {
@@ -28,38 +66,55 @@ document.getElementById('loginForm')?.addEventListener('submit', function(e) {
     .then(data => {
         console.log('Login response:', data);
         if (data.success) {
+            // Show success message
+            messageBox.textContent = 'Login successful! Redirecting...';
+            messageBox.classList.add('success');
+            messageBox.style.display = 'block';
+
             // Store minimal user data in sessionStorage
-            sessionStorage.setItem('user', JSON.stringify({
+            const userData = {
                 name: data.user.name,
                 email: data.user.email,
                 role: data.user.role
-            }));
+            };
+            console.log('User data being stored:', userData);
+            sessionStorage.setItem('user', JSON.stringify(userData));
             
-            // Redirect based on role
-            switch(data.user.role) {
-                case 'student':
-                    window.location.href = 'dashboard_student.html';
-                    break;
-                case 'lecturer':
-                    window.location.href = 'lecturer_dashboard.html';
-                    break;
-                case 'admin':
-                    window.location.href = 'admin_dashboard.html';
-                    break;
-                default:
-                    window.location.href = 'index.html';
-            }
+            // Redirect based on role after a short delay
+            console.log('Redirecting user with role:', data.user.role);
+            setTimeout(() => {
+                switch(data.user.role) {
+                    case 'student':
+                        console.log('Redirecting to student dashboard');
+                        window.location.href = 'dashboard_student.html';
+                        break;
+                    case 'lecturer':
+                        console.log('Redirecting to lecturer dashboard');
+                        window.location.href = 'lecturer_dashboard.html';
+                        break;
+                    case 'admin':
+                        console.log('Redirecting to admin dashboard');
+                        window.location.href = 'admin_dashboard.html';
+                        break;
+                    default:
+                        console.log('Unknown role, redirecting to index');
+                        window.location.href = 'index.html';
+                }
+            }, 1000);
         } else {
-            messageBox.textContent = data.message || 'Login failed';
-            messageBox.style.display = 'block';
-            messageBox.style.color = 'red';
+            throw new Error(data.message || 'Login failed');
         }
     })
     .catch(err => {
         console.error('Login error:', err);
         messageBox.textContent = err.message || "Login service unavailable. Please try again later.";
+        messageBox.classList.add('error');
         messageBox.style.display = 'block';
-        messageBox.style.color = 'red';
+        
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
     });
 });
 
@@ -72,9 +127,18 @@ document.getElementById('registerForm')?.addEventListener('submit', function(e) 
     const password = document.getElementById('password').value.trim();
     const role = document.getElementById('role').value;
     const course = document.getElementById('course')?.value || '';
+    const submitBtn = this.querySelector('button[type="submit"]');
     const messageBox = document.getElementById('formMessage');
+    
+    // Clear previous messages
     messageBox.textContent = '';
     messageBox.style.display = 'none';
+    messageBox.classList.remove('error', 'success');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Registering...';
     
     fetch('../backend/register.php', {
         method: 'POST',
@@ -93,22 +157,30 @@ document.getElementById('registerForm')?.addEventListener('submit', function(e) 
     })
     .then(data => {
         messageBox.textContent = data.message;
+        messageBox.classList.add(data.success ? 'success' : 'error');
         messageBox.style.display = 'block';
         
         if (data.success) {
-            messageBox.style.color = 'green';
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 1500);
         } else {
-            messageBox.style.color = 'red';
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.innerHTML = 'Register';
         }
     })
     .catch(err => {
         console.error('Registration error:', err);
         messageBox.textContent = err.message || "Registration service unavailable. Please try again later.";
+        messageBox.classList.add('error');
         messageBox.style.display = 'block';
-        messageBox.style.color = 'red';
+        
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.innerHTML = 'Register';
     });
 });
 
@@ -118,9 +190,18 @@ document.getElementById('resetPasswordForm')?.addEventListener('submit', functio
 
     const email = document.getElementById('resetEmail').value.trim();
     const newPassword = document.getElementById('newPassword').value.trim();
+    const submitBtn = this.querySelector('button[type="submit"]');
     const messageBox = document.getElementById('formMessage');
+    
+    // Clear previous messages
     messageBox.textContent = '';
     messageBox.style.display = 'none';
+    messageBox.classList.remove('error', 'success');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Resetting...';
 
     fetch('../backend/reset_password.php', {
         method: 'POST',
@@ -139,21 +220,29 @@ document.getElementById('resetPasswordForm')?.addEventListener('submit', functio
     })
     .then(data => {
         messageBox.textContent = data.message;
+        messageBox.classList.add(data.success ? 'success' : 'error');
         messageBox.style.display = 'block';
         
         if (data.success) {
-            messageBox.style.color = 'green';
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 1500);
         } else {
-            messageBox.style.color = 'red';
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+            submitBtn.innerHTML = 'Reset Password';
         }
     })
     .catch(err => {
         console.error('Password reset error:', err);
         messageBox.textContent = err.message || "Password reset service unavailable. Please try again later.";
+        messageBox.classList.add('error');
         messageBox.style.display = 'block';
-        messageBox.style.color = 'red';
+        
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.innerHTML = 'Reset Password';
     });
 });
