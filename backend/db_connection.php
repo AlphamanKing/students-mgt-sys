@@ -14,7 +14,7 @@ $username = 'root';
 $password = '';
 $database = 'student_info_system';
 
-// Create connection
+// Create mysqli connection
 $conn = new mysqli($host, $username, $password, $database);
 
 // Check connection

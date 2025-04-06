@@ -247,12 +247,12 @@ class LecturerDashboard {
             const result = await response.json();
             console.log('[Students] Parsed response:', result);
         
-            if (!result.success || !result.students || !Array.isArray(result.students)) {
+            if (!result.success || !result.data || !Array.isArray(result.data)) {
                 throw new Error('Invalid response format or no students found');
             }
         
             // Sort students by name
-            const students = result.students.sort((a, b) => 
+            const students = result.data.sort((a, b) => 
                 (a.name || '').localeCompare(b.name || '')
             );
             
@@ -1187,13 +1187,18 @@ class LecturerDashboard {
           // Fetch student data
           const studentResponse = await this.fetchAPI('get_students.php');
           
-          if (!studentResponse.success || !studentResponse.students) {
+          if (!studentResponse.success || !studentResponse.data) {
             throw new Error('Failed to fetch student data');
           }
           
-          const student = studentResponse.students.find(s => s.student_id === parseInt(studentId));
+          // Convert studentId to number for comparison
+          const selectedStudentId = parseInt(studentId);
+          console.log('[Generate Report] Looking for student with ID:', selectedStudentId);
+          console.log('[Generate Report] Available students:', studentResponse.data);
+          
+          const student = studentResponse.data.find(s => parseInt(s.student_id) === selectedStudentId);
           if (!student) {
-            throw new Error('Student not found');
+            throw new Error(`Student with ID ${selectedStudentId} not found`);
           }
 
           let grades = [];
@@ -1205,13 +1210,13 @@ class LecturerDashboard {
             if (gradesResponse.success) {
               // Extract grades from data property and filter for selected student
               const allGrades = gradesResponse.data || gradesResponse.grades || [];
-              grades = allGrades.filter(g => g.student_id === parseInt(studentId));
+              grades = allGrades.filter(g => parseInt(g.student_id) === selectedStudentId);
             }
           }
           
           // Fetch attendance if selected
           if (includeAttendance) {
-            const attendanceResponse = await this.fetchAPI(`get_attendance.php?student_id=${studentId}`);
+            const attendanceResponse = await this.fetchAPI(`get_attendance.php?student_id=${selectedStudentId}`);
             if (attendanceResponse.success) {
               // Use the data directly since we're fetching for a specific student
               attendance = attendanceResponse.data || [];
@@ -1251,7 +1256,7 @@ class LecturerDashboard {
           this.showToast('Report generated successfully', 'success');
         } catch (error) {
           console.error('[Generate Report] Error:', error);
-          this.showToast('Failed to generate report', 'error');
+          this.showToast(error.message || 'Failed to generate report', 'error');
         }
     }
 
@@ -1584,37 +1589,39 @@ class LecturerDashboard {
         link.click();
     }
 
-    populateExportStudentDropdown() {
+    async populateExportStudentDropdown() {
         const exportStudentSelect = document.getElementById('exportStudentSelect');
         if (!exportStudentSelect) {
             console.error('[Export] Export student select element not found');
             return;
         }
 
-        // Clear existing options and add default option
-        exportStudentSelect.innerHTML = '<option value="">-- Select Student --</option>';
+        // Clear existing options
+        exportStudentSelect.innerHTML = '<option value="">Select a student</option>';
 
-        // Fetch students data
-        fetch(`${this.API_BASE_URL}/get_students.php`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
+        try {
+            console.log('[Export] Fetching students for export dropdown');
+            const response = await fetch(`${this.API_BASE_URL}/get_students.php`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json();
-        })
-        .then(response => {
-            if (!response.success || !response.students || !Array.isArray(response.students)) {
+            
+            const result = await response.json();
+            console.log('[Export] Students response:', result);
+            
+            if (!result.success || !result.data || !Array.isArray(result.data)) {
                 throw new Error('Invalid response format or no students found');
             }
 
             // Sort students by name
-            const students = response.students.sort((a, b) => 
+            const students = result.data.sort((a, b) => 
                 (a.name || '').localeCompare(b.name || '')
             );
 
@@ -1637,12 +1644,11 @@ class LecturerDashboard {
             if (students.length === 1) {
                 exportStudentSelect.value = students[0].student_id;
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('[Export] Failed to load students:', error);
             exportStudentSelect.innerHTML = '<option value="">Error loading students. Please refresh.</option>';
             this.showToast('Failed to load students. Please try refreshing the page.', 'error');
-        });
+        }
     }
 }
 

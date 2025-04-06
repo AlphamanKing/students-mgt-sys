@@ -42,14 +42,16 @@ try {
     $attendance_id = $data['attendance_id'];
 
     // Prepare and execute delete statement
-    $stmt = $conn->prepare("DELETE FROM attendance WHERE attendance_id = :id");
-    $stmt->bindParam(':id', $attendance_id, PDO::PARAM_INT);
+    $stmt = $conn->prepare("DELETE FROM attendance WHERE attendance_id = ?");
+    $stmt->bind_param("i", $attendance_id);
     
     if (!$stmt->execute()) {
-        throw new Exception('Failed to execute database query');
+        throw new Exception('Failed to execute database query: ' . $stmt->error);
     }
 
-    $rowsAffected = $stmt->rowCount();
+    $rowsAffected = $stmt->affected_rows;
+    $stmt->close();
+    
     if ($rowsAffected > 0) {
         $response = [
             'success' => true,
@@ -64,11 +66,6 @@ try {
         ];
     }
 
-} catch (PDOException $e) {
-    $response = [
-        'success' => false,
-        'message' => 'Database error: ' . $e->getMessage()
-    ];
 } catch (Exception $e) {
     $response = [
         'success' => false,

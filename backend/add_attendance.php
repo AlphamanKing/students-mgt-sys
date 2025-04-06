@@ -18,47 +18,43 @@ try {
         // Update existing record
         $stmt = $conn->prepare("
             UPDATE attendance 
-            SET student_id = :student_id,
-                date = :date,
-                status = :status
-            WHERE attendance_id = :attendance_id
+            SET student_id = ?,
+                date = ?,
+                status = ?
+            WHERE attendance_id = ?
         ");
-        $params = [
-            ':attendance_id' => $input['attendance_id'],
-            ':student_id' => $input['student_id'],
-            ':date' => $input['date'],
-            ':status' => $input['status']
-        ];
+        $stmt->bind_param("issi", 
+            $input['student_id'], 
+            $input['date'], 
+            $input['status'],
+            $input['attendance_id']
+        );
     } else {
         // Insert new record
         $stmt = $conn->prepare("
             INSERT INTO attendance (student_id, date, status)
-            VALUES (:student_id, :date, :status)
+            VALUES (?, ?, ?)
         ");
-        $params = [
-            ':student_id' => $input['student_id'],
-            ':date' => $input['date'],
-            ':status' => $input['status']
-        ];
+        $stmt->bind_param("iss", 
+            $input['student_id'], 
+            $input['date'], 
+            $input['status']
+        );
     }
 
-    $success = $stmt->execute($params);
-
-    if ($success) {
-        $response = [
-            'success' => true,
-            'message' => 'Attendance record saved successfully',
-            'attendance_id' => $input['attendance_id'] ?? $conn->lastInsertId()
-        ];
-    } else {
-        throw new Exception('Failed to save attendance record');
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to save attendance record: ' . $stmt->error);
     }
 
-} catch (PDOException $e) {
+    $attendanceId = !empty($input['attendance_id']) ? $input['attendance_id'] : $stmt->insert_id;
+    $stmt->close();
+
     $response = [
-        'success' => false,
-        'message' => 'Database error: ' . $e->getMessage()
+        'success' => true,
+        'message' => 'Attendance record saved successfully',
+        'attendance_id' => $attendanceId
     ];
+
 } catch (Exception $e) {
     $response = [
         'success' => false,

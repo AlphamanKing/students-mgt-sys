@@ -47,38 +47,34 @@ try {
     // Update the grade in the database
     $stmt = $conn->prepare("
         UPDATE grades 
-        SET grade = :grade, subject = :subject 
-        WHERE grade_id = :grade_id
+        SET grade = ?, subject = ? 
+        WHERE grade_id = ?
     ");
     
-    $success = $stmt->execute([
-        ':grade' => strtoupper($data['grade']),
-        ':subject' => $data['subject'],
-        ':grade_id' => $data['grade_id']
-    ]);
-
-    if (!$success) {
-        throw new Exception('Failed to update grade');
+    $grade = strtoupper($data['grade']);
+    $subject = $data['subject'];
+    $gradeId = $data['grade_id'];
+    
+    $stmt->bind_param("ssi", $grade, $subject, $gradeId);
+    
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to update grade: ' . $stmt->error);
     }
 
-    if ($stmt->rowCount() === 0) {
+    if ($stmt->affected_rows === 0) {
         throw new Exception('Grade not found');
     }
+    
+    $stmt->close();
 
     echo json_encode([
         'success' => true,
         'message' => 'Grade updated successfully'
     ]);
 
-} catch (PDOException $e) {
-    error_log("Database error in update_grade.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error occurred'
-    ]);
 } catch (Exception $e) {
-    http_response_code(400);
+    error_log("Error in update_grade.php: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

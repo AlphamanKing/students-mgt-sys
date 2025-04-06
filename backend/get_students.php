@@ -48,21 +48,13 @@ try {
     
     $students = [];
     while ($row = $result->fetch_assoc()) {
-        $students[] = [
-            'student_id' => $row['student_id'],
-            'name' => $row['name'],
-            'email' => $row['email'],
-            'course' => $row['course'],
-            'status' => $row['status'],
-            'created_at' => $row['created_at']
-        ];
+        $students[] = $row;
     }
-        
-        echo json_encode([
-            'success' => true,
+    
+    echo json_encode([
+        'success' => true,
         'data' => $students
     ]);
-    
 } catch (Exception $e) {
     error_log("Error in get_students.php: " . $e->getMessage());
     http_response_code(500);

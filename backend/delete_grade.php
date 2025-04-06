@@ -41,31 +41,27 @@ try {
     }
 
     // Delete the grade
-    $stmt = $conn->prepare("DELETE FROM grades WHERE grade_id = :grade_id");
-    $success = $stmt->execute([':grade_id' => $data['grade_id']]);
-
-    if (!$success) {
-        throw new Exception('Failed to delete grade');
+    $stmt = $conn->prepare("DELETE FROM grades WHERE grade_id = ?");
+    $stmt->bind_param("i", $data['grade_id']);
+    
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to delete grade: ' . $stmt->error);
     }
 
-    if ($stmt->rowCount() === 0) {
+    if ($stmt->affected_rows === 0) {
         throw new Exception('Grade not found');
     }
+    
+    $stmt->close();
 
     echo json_encode([
         'success' => true,
         'message' => 'Grade deleted successfully'
     ]);
 
-} catch (PDOException $e) {
-    error_log("Database error in delete_grade.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error occurred'
-    ]);
 } catch (Exception $e) {
-    http_response_code(400);
+    error_log("Error in delete_grade.php: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

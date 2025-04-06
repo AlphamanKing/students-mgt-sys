@@ -51,28 +51,32 @@ try {
 
     // Verify student exists
     $checkStmt = $conn->prepare("SELECT student_id FROM students WHERE student_id = ?");
-    $checkStmt->execute([$data['student_id']]);
-    if (!$checkStmt->fetch()) {
+    $checkStmt->bind_param("i", $data['student_id']);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    if (!$result->fetch_assoc()) {
         throw new Exception('Student not found');
     }
+    $checkStmt->close();
 
     // Insert grade
     $stmt = $conn->prepare("
         INSERT INTO grades (student_id, subject, grade)
-        VALUES (:student_id, :subject, :grade)
+        VALUES (?, ?, ?)
     ");
     
-    $success = $stmt->execute([
-        ':student_id' => $data['student_id'],
-        ':subject' => $data['subject'],
-        ':grade' => strtoupper($data['grade'])
-    ]);
-
-    if (!$success) {
-        throw new Exception('Failed to add grade');
+    $studentId = $data['student_id'];
+    $subject = $data['subject'];
+    $grade = strtoupper($data['grade']);
+    
+    $stmt->bind_param("iss", $studentId, $subject, $grade);
+    
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to add grade: ' . $stmt->error);
     }
 
-    $gradeId = $conn->lastInsertId();
+    $gradeId = $stmt->insert_id;
+    $stmt->close();
 
     echo json_encode([
         'success' => true,
@@ -80,15 +84,9 @@ try {
         'grade_id' => $gradeId
     ]);
 
-} catch (PDOException $e) {
-    error_log("Database error in add_grade.php: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error occurred'
-    ]);
 } catch (Exception $e) {
-    http_response_code(400);
+    error_log("Error in add_grade.php: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
