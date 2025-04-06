@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lecturer Dashboard</title>
+  <link rel="stylesheet" href="css/lecturer_dashboard.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Lecturer Panel</h2>
+      </div>
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-section="dashboard">
+          <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a href="#" class="nav-item" data-section="manageGrades">
+          <i class="fas fa-graduation-cap"></i> Manage Grades
+        </a>
+        <a href="#" class="nav-item" data-section="manageAttendance">
+          <i class="fas fa-clipboard-check"></i> Manage Attendance
+        </a>
+        <a href="#" class="nav-item" data-section="analytics">
+          <i class="fas fa-chart-bar"></i> Analytics
+        </a>
+        <a href="#" class="nav-item" data-section="exportReports">
+          <i class="fas fa-file-export"></i> Export Reports
+        </a>
+        <a href="#" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Course & Class Selection Section -->
+      <div id="courseClassSelection" class="section active">
+        <h2>Select Course and Class</h2>
+        <form id="courseClassForm">
+          <label for="courseSelect">Course/Unit:</label>
+          <select id="courseSelect" required>
+            <option value="">-- Select Course --</option>
+            <option value="course1">Course 1</option>
+            <option value="course2">Course 2</option>
+            <option value="course3">Course 3</option>
+          </select>
+          <br>
+          <label for="classSelect">Class/Year Group:</label>
+          <select id="classSelect" required>
+            <option value="">-- Select Class --</option>
+            <option value="year1">Year 1</option>
+            <option value="year2">Year 2</option>
+            <option value="year3">Year 3</option>
+            <option value="year4">Year 4</option>
+            <option value="year5">Year 5</option>
+            <option value="year6">Year 6</option>
+          </select>
+          <br>
+          <button type="submit">Load Data</button>
+        </form>
+      </div>
+
+      <!-- Dashboard Overview Section -->
+      <section id="dashboard" class="section active">
+        <div class="dashboard-header">
+          <h2>Dashboard Overview</h2>
+        </div>
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="card-content">
+              <h3>Manage Grades</h3>
+              <p>Add, edit, and track student grades across different subjects.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="card-content">
+              <h3>Attendance Tracking</h3>
+              <p>Record and monitor student attendance with ease.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="card-content">
+              <h3>Analytics</h3>
+              <p>View detailed performance analytics and attendance trends.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-file-export"></i>
+            </div>
+            <div class="card-content">
+              <h3>Reports</h3>
+              <p>Generate and export comprehensive student reports.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Manage Grades Section -->
+      <section id="manageGrades" class="section">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="mb-0">Manage Student Grades</h2>
+                </div>
+                <div class="card-body">
+                  <form id="gradeForm" class="mb-4">
+                    <input type="hidden" id="gradeId" name="gradeId">
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="studentSelect" class="form-label">Select Student:</label>
+                        <select id="studentSelect" name="student_id" class="form-select select2" required>
+                          <option value="">-- Select Student --</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="subject" class="form-label">Subject:</label>
+                        <input type="text" id="subject" name="subject" class="form-control" required placeholder="Enter subject name">
+                      </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="gradeInput" class="form-label">Grade:</label>
+                        <select id="gradeInput" name="grade" class="form-select" required>
+                          <option value="">-- Select Grade --</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="E">E</option>
+                          <option value="F">F</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div class="row">
+                      <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Submit Grade</button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="table-responsive">
+                    <h3 class="mb-3">Existing Grades</h3>
+                    <div id="gradesTableMessage" class="alert" style="display: none;"></div>
+                    <table class="table table-striped table-hover">
+                      <thead class="table-dark">
+                        <tr>
+                          <th>Student Name</th>
+                          <th>Subject</th>
+                          <th>Grade</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="gradesTable">
+                        <!-- Dynamic data will be inserted here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Manage Attendance Section -->
+      <section id="manageAttendance" class="section">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="mb-0">Manage Student Attendance</h2>
+                </div>
+                <div class="card-body">
+                  <form id="attendanceForm" class="mb-4">
+                    <input type="hidden" id="attendanceId" name="attendanceId">
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="attendanceStudentSelect" class="form-label">Select Student:</label>
+                        <select id="attendanceStudentSelect" name="student_id" class="form-select select2" required>
+                          <option value="">-- Select Student --</option>
+                          <!-- Populated dynamically -->
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="attendanceDate" class="form-label">Date:</label>
+                        <input type="date" id="attendanceDate" name="date" class="form-control" required>
+                      </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="attendanceStatus" class="form-label">Status:</label>
+                        <select id="attendanceStatus" name="status" class="form-select" required>
+                          <option value="Present">Present</option>
+                          <option value="Absent">Absent</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div class="row">
+                      <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Update Attendance</button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="table-responsive">
+                    <h3 class="mb-3">Attendance Records</h3>
+                    <div id="attendanceTableMessage" class="alert" style="display: none;"></div>
+                    <table class="table table-striped table-hover">
+                      <thead class="table-dark">
+                        <tr>
+                          <th>Student</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="attendanceTable">
+                        <!-- Dynamic data will be inserted here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="section">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="mb-0">Analytics Dashboard</h2>
+                </div>
+                <div class="card-body">
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                          <h3 class="mb-0">Grade Distribution</h3>
+                        </div>
+                        <div class="card-body">
+                          <div class="chart-container" style="height: 300px;">
+                            <canvas id="gradeDistributionChart"></canvas>
+                          </div>
+                          <div class="mt-3">
+                            <h5>About This Chart</h5>
+                            <p>This pie chart shows the distribution of grades across all students. It helps you quickly identify the most common grades and spot any patterns in student performance. The larger the segment, the more students received that grade.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                          <h3 class="mb-0">Attendance Trends</h3>
+                        </div>
+                        <div class="card-body">
+                          <div class="chart-container" style="height: 300px;">
+                            <canvas id="attendanceTrendChart"></canvas>
+                          </div>
+                          <div class="mt-3">
+                            <h5>About This Chart</h5>
+                            <p>This line chart displays attendance rates over time, organized by week. It helps you track attendance patterns and identify any concerning trends. A higher percentage indicates better attendance, while sudden drops may require attention.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="row">
+                    <div class="col-md-12">
+                      <div class="card">
+                        <div class="card-header bg-success text-white">
+                          <h3 class="mb-0">Student Performance Summary</h3>
+                        </div>
+                        <div class="card-body">
+                          <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                              <thead class="table-dark">
+                                <tr>
+                                  <th>Student</th>
+                                  <th>Average Grade</th>
+                                  <th>Attendance Rate</th>
+                                  <th>Performance Status</th>
+                                </tr>
+                              </thead>
+                              <tbody id="studentPerformanceTable">
+                                <!-- Dynamic data will be inserted here -->
+                              </tbody>
+                            </table>
+                          </div>
+                          <div class="mt-3">
+                            <h5>About This Table</h5>
+                            <p>This summary table provides a quick overview of each student's performance, combining their average grade and attendance rate. The performance status helps identify students who may need additional support or recognition.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export Reports Section -->
+      <section id="exportReports" class="section">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header bg-primary text-white">
+                  <h2 class="mb-0">Export Student Reports</h2>
+                </div>
+                <div class="card-body">
+                  <form id="exportReportForm" class="mb-4">
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label for="exportStudentSelect" class="form-label">Select Student:</label>
+                        <select id="exportStudentSelect" name="student_id" class="form-select select2" required>
+                          <option value="">-- Select Student --</option>
+                          <!-- Populated dynamically -->
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-12">
+                        <h4>Report Content</h4>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="includeGrades" name="includeGrades" checked>
+                          <label class="form-check-label" for="includeGrades">
+                            Include Grades
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="includeAttendance" name="includeAttendance" checked>
+                          <label class="form-check-label" for="includeAttendance">
+                            Include Attendance
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="includePerformance" name="includePerformance" checked>
+                          <label class="form-check-label" for="includePerformance">
+                            Include Performance Analysis
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="includeRecommendations" name="includeRecommendations" checked>
+                          <label class="form-check-label" for="includeRecommendations">
+                            Include Recommendations
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-12">
+                        <h4>Report Format</h4>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" id="formatPDF" name="format" value="pdf" checked>
+                          <label class="form-check-label" for="formatPDF">PDF</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" id="formatCSV" name="format" value="csv">
+                          <label class="form-check-label" for="formatCSV">CSV</label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="row">
+                      <div class="col-12">
+                        <button type="submit" class="btn btn-primary" id="generateReportBtn">Generate Report</button>
+                      </div>
+                    </div>
+                  </form>
+                  
+                  <div id="reportPreview" class="mt-4" style="display: none;">
+                    <h3>Report Preview</h3>
+                    <div class="card">
+                      <div class="card-body">
+                        <div id="reportContent" class="p-3 border rounded">
+                          <!-- Report content will be dynamically inserted here -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Global Configuration -->
+  <script>
+    window.API_BASE_URL = '/sis-master/backend';
+  </script>
+  
+  <!-- Main JavaScript -->
+  <script src="js/lecturer_dashboard.js"></script>
+</body>
+</html>

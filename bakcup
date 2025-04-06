@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="css/student_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h2>My Dashboard</h2>
+      <ul>
+        <li class="nav-item active" data-section="profile">👤 My Info</li>
+        <li class="nav-item" data-section="grades">📊 Grades</li>
+        <li class="nav-item" data-section="attendance">📈 Attendance</li>
+        <li class="nav-item" data-section="notifications">🔔 Notifications</li>
+        <li class="nav-item" data-section="export">📤 Export Report</li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Profile Section -->
+      <div id="profile" class="section active">
+        <h2>Student Profile</h2>
+        <p><strong>Name:</strong> <span id="profileName">Loading...</span></p>
+        <p><strong>Reg No:</strong> <span id="profileRegNo">Loading...</span></p>
+        <p><strong>Course:</strong> <span id="profileCourse">Loading...</span></p>
+
+        <div id="courseUpdateSection" style="display:none; margin-top: 15px;">
+          <form id="courseForm">
+            <label>Select Course:</label>
+            <select id="course" required>
+              <option value="">-- Select Course --</option>
+              <option value="BBIT">BBIT</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Software Engineering">Software Engineering</option>
+              <option value="Computer Technology">Computer Technology</option>
+            </select>
+            <button type="submit">Update</button>
+          </form>
+          <div id="courseUpdateMessage"></div>
+        </div>
+      </div>
+
+      <!-- Grades Section -->
+      <div id="grades" class="section">
+        <h2>Academic Performance</h2>
+        <canvas id="gradesChart"></canvas>
+        <h3>Grades Summary</h3>
+        <table id="gradesTable">
+          <thead>
+            <tr><th>Subject</th><th>Grade</th></tr>
+          </thead>
+          <tbody id="gradesTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Attendance Section -->
+      <div id="attendance" class="section">
+        <h2>Attendance Overview</h2>
+        <canvas id="attendanceBarChart"></canvas>
+        <p><strong>Attendance %:</strong> <span id="attendancePercentage">--</span>%</p>
+        <div id="examEligibilityStatus" class="eligibility-badge">Eligibility loading...</div>
+      </div>
+
+      <!-- Notifications Section -->
+      <div id="notifications" class="section">
+        <h2>Notifications</h2>
+        <ul id="notificationList"></ul>
+      </div>
+
+      <!-- Export Section -->
+      <div id="export" class="section">
+        <h2>Download Report</h2>
+        <button id="downloadReportBtn">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/student_dashboard.js"></script>
+  <script>
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.section');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        sections.forEach(sec => sec.classList.remove('active'));
+        const target = document.getElementById(item.getAttribute('data-section'));
+        if (target) target.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
+
+<?php
+header("Content-Type: application/json");
+require 'db_config.php';
+session_start();
+
+// Simulate login session (replace with real session management later)
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(["success" => false, "message" => "User not logged in"]);
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Fetch student info
+$stmt = $conn->prepare("SELECT name, email, course FROM students WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 1) {
+    $student = $result->fetch_assoc();
+
+    // 🔸 Dummy data for charts (replace with real queries later)
+    $grades = [75, 82, 68, 90]; // simulate grades
+    $attendance = [88, 92, 80, 95]; // simulate attendance
+
+    echo json_encode([
+        "success" => true,
+        "student" => $student,
+        "grades" => $grades,
+        "attendance" => $attendance
+    ]);
+} else {
+    echo json_encode(["success" => false, "message" => "Student profile not found"]);
+}
+
+$stmt->close();
+$conn->close();
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('../backend/fetch_student_data.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Student profile
+          document.getElementById("profileName").textContent = data.profile.name;
+          document.getElementById("profileRegNo").textContent = data.profile.reg_no;
+          document.getElementById("profileCourse").textContent = data.profile.course || "Not Selected";
+  
+          // Show course update form if course is empty
+          if (!data.profile.course || data.profile.course.trim() === "") {
+            document.getElementById("courseUpdateSection").style.display = "block";
+          }
+  
+          // Render grades
+          renderGrades(data.grades);
+  
+          // Render attendance
+          renderAttendance(data.attendance);
+  
+        } else {
+          alert("Failed to load student data.");
+        }
+      });
+  
+    // Handle course update
+    const courseForm = document.getElementById("courseForm");
+    if (courseForm) {
+      courseForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const course = document.getElementById("course").value;
+  
+        fetch("../backend/update_course.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ course })
+        })
+          .then(res => res.json())
+          .then(response => {
+            document.getElementById("courseUpdateMessage").textContent = response.message;
+            if (response.success) {
+              document.getElementById("profileCourse").textContent = course;
+              document.getElementById("courseUpdateSection").style.display = "none";
+            }
+          });
+      });
+    }
+  
+    // Load notifications
+    fetch('../backend/fetch_notifications.php')
+      .then(res => res.json())
+      .then(notifications => {
+        const list = document.getElementById("notificationList");
+        list.innerHTML = '';
+        if (notifications.length > 0) {
+          notifications.forEach(note => {
+            const li = document.createElement("li");
+            li.textContent = note.message;
+            list.appendChild(li);
+          });
+        } else {
+          list.innerHTML = "<li>No notifications available.</li>";
+        }
+      });
+  
+    // Export report
+    const exportBtn = document.getElementById("downloadReportBtn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+  
+        doc.text("Academic Report", 20, 20);
+        doc.text("Name: " + document.getElementById("profileName").textContent, 20, 30);
+        doc.text("Reg No: " + document.getElementById("profileRegNo").textContent, 20, 40);
+        doc.text("Course: " + document.getElementById("profileCourse").textContent, 20, 50);
+  
+        doc.text("Grades:", 20, 70);
+        const gradeTable = document.getElementById("gradesTable");
+        let y = 80;
+        for (let i = 1; i < gradeTable.rows.length; i++) {
+          const row = gradeTable.rows[i];
+          const subject = row.cells[0].textContent;
+          const grade = row.cells[1].textContent;
+          doc.text(`${subject}: ${grade}`, 25, y);
+          y += 10;
+        }
+  
+        doc.text("Attendance Percentage: " + document.getElementById("attendancePercentage").textContent + "%", 20, y + 10);
+        doc.text("Exam Eligibility: " + document.getElementById("examEligibilityStatus").textContent, 20, y + 20);
+  
+        doc.save("Academic_Report.pdf");
+      });
+    }
+  });
+  
+  // === Helper Functions ===
+  
+  function renderGrades(gradesData) {
+    const subjects = gradesData.map(row => row.subject);
+    const gradeValues = gradesData.map(row => gradeToNumeric(row.grade));
+  
+    // Bar chart
+    new Chart(document.getElementById("gradesChart"), {
+      type: 'bar',
+      data: {
+        labels: subjects,
+        datasets: [{
+          label: "Grades",
+          data: gradeValues,
+          backgroundColor: "#4CAF50"
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 5,
+            ticks: {
+              stepSize: 1,
+              callback: function (value) {
+                const labels = ['F', 'E', 'D', 'C', 'B', 'A'];
+                return labels[value] || value;
+              }
+            }
+          }
+        }
+      }
+    });
+  
+    // Grades Table
+    const tbody = document.getElementById("gradesTableBody");
+    tbody.innerHTML = '';
+    gradesData.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.subject}</td><td>${row.grade}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  
+  function gradeToNumeric(grade) {
+    const map = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1, 'F': 0 };
+    return map[grade.toUpperCase()] || 0;
+  }
+  
+  function renderAttendance(attendanceData) {
+    const total = attendanceData.length;
+    const present = attendanceData.filter(r => r.status === "Present").length;
+    const attendancePercentage = total > 0 ? Math.round((present / total) * 100) : 0;
+  
+    document.getElementById("attendancePercentage").textContent = attendancePercentage;
+  
+    const eligibility = attendancePercentage >= 75 ? "✅ Eligible for Exams" : "❌ Not Eligible for Exams";
+    const badge = document.getElementById("examEligibilityStatus");
+    badge.textContent = eligibility;
+    badge.style.background = attendancePercentage >= 75 ? "#c8e6c9" : "#ffcdd2";
+    badge.style.color = attendancePercentage >= 75 ? "#256029" : "#c62828";
+  
+    // Chart
+    new Chart(document.getElementById("attendanceBarChart"), {
+      type: 'bar',
+      data: {
+        labels: ['Attendance %'],
+        datasets: [{
+          label: 'Attendance Percentage',
+          data: [attendancePercentage],
+          backgroundColor: attendancePercentage >= 75 ? '#2196F3' : '#F44336'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        }
+      }
+    });
+  }
+  
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+  }
+  
+  .dashboard-wrapper {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  .sidebar {
+    width: 220px;
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+  }
+  
+  .sidebar h2 {
+    font-size: 22px;
+    margin-bottom: 30px;
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar ul li {
+    padding: 12px 10px;
+    margin-bottom: 10px;
+    background: #34495e;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s ease;
+  }
+  
+  .sidebar ul li:hover,
+  .sidebar ul li.active {
+    background: #1abc9c;
+  }
+  
+  .main-content {
+    flex-grow: 1;
+    padding: 30px;
+    background: #fefefe;
+  }
+  
+  .section {
+    display: none;
+  }
+  
+  .section.active {
+    display: block;
+  }
+  
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background: #fff;
+    margin-top: 20px;
+  }
+  
+  th, td {
+    padding: 12px;
+    border: 1px solid #ccc;
+    text-align: left;
+  }
+  
+  .eligibility-badge {
+    padding: 10px;
+    background: #eee;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 10px;
+    font-size: 16px;
+  }
+  
+  #notificationList li {
+    margin-bottom: 10px;
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    background: #1abc9c;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background: #16a085;
+  }
+  
+
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Sidebar Navigation: show a section
+    window.showSection = function(sectionId) {
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById(sectionId).classList.add("active");
+    };
+
+    // Attach logout function correctly
+    const logoutBtn = document.querySelector(".logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", logout);
+    } else {
+        console.error("Logout button not found.");
+    }
+});
+
+// Define logout function globally so it's accessible from the HTML onclick
+function logout() {
+    fetch("../backend/logout.php", { method: "GET" })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Logout request failed");
+            }
+            window.location.href = "../frontend/index.html"; // Redirect after logout
+        })
+        .catch(err => console.error("Logout error:", err));
+}
+
+// Helper: Grade Distribution Chart (Pie Chart)
+function renderGradeDistributionChart() {
+    const ctx = document.getElementById("gradeDistributionChart").getContext("2d");
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ["A", "B", "C", "D", "E", "F"],
+            datasets: [{
+                data: [10, 20, 30, 15, 10, 5],
+                backgroundColor: ["#4CAF50", "#36A2EB", "#FFCE56", "#FF9800", "#9C27B0", "#F44336"],
+                borderWidth: 2,
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+// Helper: Attendance Trend Chart (Bar Chart)
+function renderAttendanceTrendChart() {
+    const ctx = document.getElementById("attendanceTrendChart").getContext("2d");
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+            datasets: [{
+                label: "Attendance (%)",
+                data: [85, 90, 80, 95],
+                backgroundColor: "#2196F3",
+                borderWidth: 2,
+                borderColor: "#000",
+                hoverBorderWidth: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { stepSize: 10 }
+                }
+            }
+        }
+    });
+}
+
+// Helper: Top & Bottom Performers (Leaderboard Table)
+function renderPerformanceTable() {
+    const tableBody = document.querySelector("#performanceTable tbody");
+    const performers = [
+        { name: "Alice", grade: "A" },
+        { name: "Bob", grade: "B" },
+        { name: "Charlie", grade: "F" },
+        { name: "David", grade: "C" },
+        { name: "Eve", grade: "D" }
+    ];
+    tableBody.innerHTML = "";
+    performers.forEach(p => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${p.name}</td><td>${p.grade}</td>`;
+        tableBody.appendChild(row);
+    });
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lecturer Dashboard</title>
+  <link rel="stylesheet" href="css/lecturer_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <h2>Lecturer Panel</h2>
+      <ul>
+        <li class="nav-item active" onclick="showSection('dashboard')">🏠 Dashboard</li>
+        <li class="nav-item" onclick="showSection('manageGrades')">📊 Manage Grades</li>
+        <li class="nav-item" onclick="showSection('manageAttendance')">✅ Manage Attendance</li>
+        <li class="nav-item" onclick="showSection('analytics')">📈 Analytics</li>
+        <li class="nav-item" onclick="showSection('exportReports')">📂 Export Reports</li>
+      </ul>
+      <button class="logout-btn">🚪 Logout</button>
+      <button id="toggleSidebar" class="toggle-btn">☰</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Course & Class Selection Section -->
+      <div id="courseClassSelection" class="section active">
+        <h2>Select Course and Class</h2>
+        <form id="courseClassForm">
+          <label for="courseSelect">Course/Unit:</label>
+          <select id="courseSelect" required>
+            <option value="">-- Select Course --</option>
+            <!-- Options should be populated dynamically from the database -->
+            <option value="course1">Course 1</option>
+            <option value="course2">Course 2</option>
+            <option value="course3">Course 3</option>
+          </select>
+          <br>
+          <label for="classSelect">Class/Year Group:</label>
+          <select id="classSelect" required>
+            <option value="">-- Select Class --</option>
+            <option value="year1">Year 1</option>
+            <option value="year2">Year 2</option>
+            <option value="year3">Year 3</option>
+            <option value="year4">Year 4</option>
+            <option value="year5">Year 5</option>
+            <option value="year6">Year 6</option>
+          </select>
+          <br>
+          <button type="submit">Load Data</button>
+        </form>
+      </div>
+
+      <!-- Dashboard Overview Section (for lecturer analytics) -->
+      <section id="dashboard" class="section">
+        <h2>Dashboard Overview</h2>
+        <p>Welcome to the Lecturer Dashboard. Here you can manage grades, attendance, and view analytics.</p>
+      </section>
+
+      <!-- Manage Grades Section -->
+      <section id="manageGrades" class="section">
+        <h2>Manage Grades</h2>
+        <!-- Grade management forms and tables go here -->
+        <p>Grade management forms will appear here.</p>
+      </section>
+
+      <!-- Manage Attendance Section -->
+      <section id="manageAttendance" class="section">
+        <h2>Manage Attendance</h2>
+        <!-- Attendance management forms and tables go here -->
+        <p>Attendance management forms will appear here.</p>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="section">
+        <h2>Analytics</h2>
+        <div class="chart-container">
+          <canvas id="gradeDistributionChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="attendanceTrendChart"></canvas>
+        </div>
+        <h3>Top &amp; Bottom Performers</h3>
+        <table id="performanceTable">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamic data goes here -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Export Reports Section -->
+      <section id="exportReports" class="section">
+        <h2>Export Reports</h2>
+        <button id="exportPDF">Download PDF</button>
+        <button id="exportCSV">Download CSV</button>
+      </section>
+    </div>
+  </div>
+  <script src="js/lecturer_dashboard.js"></script>
+</body>
+</html>
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Sidebar Navigation: show a section
+  window.showSection = function (sectionId) {
+      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(sectionId).classList.add("active");
+
+      // Load data when switching sections
+      if (sectionId === "manageGrades") {
+          fetchGrades();
+      } else if (sectionId === "manageAttendance") {
+          fetchAttendance();
+      }
+  };
+
+  // Handle Logout
+  document.querySelector(".logout-btn").addEventListener("click", logout);
+  function logout() {
+      fetch("../backend/logout.php", { method: "GET" })
+          .then(() => window.location.href = "../frontend/index.html")
+          .catch(err => console.error("Logout error:", err));
+  }
+
+  // Load Charts & Tables
+  renderGradeDistributionChart();
+  renderAttendanceTrendChart();
+  renderPerformanceTable();
+
+  // Handle Course & Class selection form
+  document.getElementById("courseClassForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const course = document.getElementById("courseSelect").value;
+      const classGroup = document.getElementById("classSelect").value;
+      alert(`Loading data for ${course} - ${classGroup}`);
+  });
+
+  // Handle Grade Submission
+  document.getElementById("gradeForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch("../backend/add_grade.php", {
+          method: "POST",
+          body: formData
+      }).then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            fetchGrades();
+        }).catch(err => console.error("Error adding grade:", err));
+  });
+
+  // Handle Attendance Submission
+  document.getElementById("attendanceForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch("../backend/add_attendance.php", {
+          method: "POST",
+          body: formData
+      }).then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            fetchAttendance();
+        }).catch(err => console.error("Error adding attendance:", err));
+  });
+});
+
+// Fetch & Display Grades
+function fetchGrades() {
+  fetch("../backend/get_grade.php")
+      .then(response => response.json())
+      .then(data => {
+          const tableBody = document.getElementById("gradesTableBody");
+          tableBody.innerHTML = "";
+          data.forEach(grade => {
+              const row = `<tr>
+                  <td>${grade.student_name}</td>
+                  <td>${grade.course}</td>
+                  <td>${grade.grade}</td>
+                  <td>
+                      <button onclick="deleteGrade(${grade.id})">Delete</button>
+                  </td>
+              </tr>`;
+              tableBody.innerHTML += row;
+          });
+      })
+      .catch(err => console.error("Error fetching grades:", err));
+}
+
+// Delete Grade
+function deleteGrade(gradeId) {
+  fetch(`../backend/delete_grade.php?id=${gradeId}`, { method: "GET" })
+      .then(response => response.json())
+      .then(data => {
+          alert(data.message);
+          fetchGrades();
+      })
+      .catch(err => console.error("Error deleting grade:", err));
+}
+
+// Fetch & Display Attendance
+function fetchAttendance() {
+  fetch("../backend/get_attendance.php")
+      .then(response => response.json())
+      .then(data => {
+          const tableBody = document.getElementById("attendanceTableBody");
+          tableBody.innerHTML = "";
+          data.forEach(att => {
+              const row = `<tr>
+                  <td>${att.student_name}</td>
+                  <td>${att.date}</td>
+                  <td>${att.status}</td>
+                  <td>
+                      <button onclick="deleteAttendance(${att.id})">Delete</button>
+                  </td>
+              </tr>`;
+              tableBody.innerHTML += row;
+          });
+      })
+      .catch(err => console.error("Error fetching attendance:", err));
+}
+
+// Delete Attendance
+function deleteAttendance(attId) {
+  fetch(`../backend/delete_attendance.php?id=${attId}`, { method: "GET" })
+      .then(response => response.json())
+      .then(data => {
+          alert(data.message);
+          fetchAttendance();
+      })
+      .catch(err => console.error("Error deleting attendance:", err));
+}
+
+// Helper: Grade Distribution Chart
+function renderGradeDistributionChart() {
+  const ctx = document.getElementById("gradeDistributionChart").getContext("2d");
+  new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: ["A", "B", "C", "D", "E", "F"],
+          datasets: [{
+              data: [10, 20, 30, 15, 10, 5],
+              backgroundColor: ["#4CAF50", "#36A2EB", "#FFCE56", "#FF9800", "#9C27B0", "#F44336"],
+              borderWidth: 2,
+              hoverOffset: 12
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: { position: 'top' }
+          }
+      }
+  });
+}
+
+// Helper: Attendance Trend Chart
+function renderAttendanceTrendChart() {
+  const ctx = document.getElementById("attendanceTrendChart").getContext("2d");
+  new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+          datasets: [{
+              label: "Attendance (%)",
+              data: [85, 90, 80, 95],
+              backgroundColor: "#2196F3",
+              borderWidth: 2,
+              borderColor: "#000",
+              hoverBorderWidth: 4
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  max: 100,
+                  ticks: { stepSize: 10 }
+              }
+          }
+      }
+  });
+}
+
+// Helper: Top & Bottom Performers Table
+function renderPerformanceTable() {
+  const tableBody = document.querySelector("#performanceTable tbody");
+  const performers = [
+      { name: "Alice", grade: "A" },
+      { name: "Bob", grade: "B" },
+      { name: "Charlie", grade: "F" },
+      { name: "David", grade: "C" },
+      { name: "Eve", grade: "D" }
+  ];
+  tableBody.innerHTML = "";
+  performers.forEach(p => {
+      const row = `<tr><td>${p.name}</td><td>${p.grade}</td></tr>`;
+      tableBody.innerHTML += row;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Sidebar Navigation: Show a section and fetch data
+  window.showSection = function (sectionId) {
+      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(sectionId).classList.add("active");
+
+      if (sectionId === "manageGrades") {
+          fetchGrades();
+      } else if (sectionId === "manageAttendance") {
+          fetchAttendance();
+      }
+  };
+
+  // Handle Logout
+  document.querySelector(".logout-btn").addEventListener("click", logout);
+  function logout() {
+      fetch("../backend/logout.php", { method: "GET" })
+          .then(() => window.location.href = "../frontend/index.html")
+          .catch(err => console.error("Logout error:", err));
+  }
+
+  // Load Charts & Tables
+  renderGradeDistributionChart();
+  renderAttendanceTrendChart();
+  renderPerformanceTable();
+
+  // Handle Grade Submission
+  document.getElementById("gradeForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      fetch("../backend/add_grade.php", {
+          method: "POST",
+          body: formData
+      }).then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            fetchGrades(); // Refresh the grades table
+        }).catch(err => console.error("Error adding grade:", err));
+  });
+
+  // Handle Attendance Submission
+  document.getElementById("attendanceForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      fetch("../backend/add_attendance.php", {
+          method: "POST",
+          body: formData
+      }).then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            fetchAttendance(); // Refresh the attendance table
+        }).catch(err => console.error("Error adding attendance:", err));
+  });
+});
+
+// ✅ Fetch & Display Grades
+function fetchGrades() {
+  fetch("../backend/get_grade.php")
+      .then(response => response.json())
+      .then(data => {
+          const tableBody = document.getElementById("gradesTable");
+          tableBody.innerHTML = "";
+
+          if (!data.length) {
+              tableBody.innerHTML = "<tr><td colspan='4'>No grades found</td></tr>";
+              return;
+          }
+
+          data.forEach(grade => {
+              const row = `<tr>
+                  <td>${grade.student_name || "N/A"}</td>
+                  <td>${grade.subject || "N/A"}</td>
+                  <td>${grade.grade || "N/A"}</td>
+                  <td>
+                      <button onclick="deleteGrade(${grade.grade_id})">Delete</button>
+                  </td>
+              </tr>`;
+              tableBody.innerHTML += row;
+          });
+      })
+      .catch(err => console.error("Error fetching grades:", err));
+}
+
+// ✅ Delete Grade
+function deleteGrade(gradeId) {
+  fetch(`../backend/delete_grade.php?id=${gradeId}`, { method: "GET" })
+      .then(response => response.json())
+      .then(data => {
+          alert(data.message);
+          fetchGrades(); // Refresh after delete
+      })
+      .catch(err => console.error("Error deleting grade:", err));
+}
+
+// ✅ Fetch & Display Attendance
+function fetchAttendance() {
+  fetch("../backend/get_attendance.php")
+      .then(response => response.json())
+      .then(data => {
+          const tableBody = document.getElementById("attendanceTable");
+          tableBody.innerHTML = "";
+
+          if (!data.length) {
+              tableBody.innerHTML = "<tr><td colspan='4'>No attendance records found</td></tr>";
+              return;
+          }
+
+          data.forEach(att => {
+              const row = `<tr>
+                  <td>${att.student_name || "N/A"}</td>
+                  <td>${att.date || "N/A"}</td>
+                  <td>${att.status || "N/A"}</td>
+                  <td>
+                      <button onclick="deleteAttendance(${att.attendance_id})">Delete</button>
+                  </td>
+              </tr>`;
+              tableBody.innerHTML += row;
+          });
+      })
+      .catch(err => console.error("Error fetching attendance:", err));
+}
+
+// ✅ Delete Attendance
+function deleteAttendance(attId) {
+  fetch(`../backend/delete_attendance.php?id=${attId}`, { method: "GET" })
+      .then(response => response.json())
+      .then(data => {
+          alert(data.message);
+          fetchAttendance(); // Refresh after delete
+      })
+      .catch(err => console.error("Error deleting attendance:", err));
+}
+
+// 🎯 Grade Distribution Chart
+function renderGradeDistributionChart() {
+  const ctx = document.getElementById("gradeDistributionChart").getContext("2d");
+  new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: ["A", "B", "C", "D", "E", "F"],
+          datasets: [{
+              data: [10, 20, 30, 15, 10, 5], // Dummy values (update with real data later)
+              backgroundColor: ["#4CAF50", "#36A2EB", "#FFCE56", "#FF9800", "#9C27B0", "#F44336"],
+              borderWidth: 2,
+              hoverOffset: 12
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: { position: 'top' }
+          }
+      }
+  });
+}
+
+// 🎯 Attendance Trend Chart
+function renderAttendanceTrendChart() {
+  const ctx = document.getElementById("attendanceTrendChart").getContext("2d");
+  new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+          datasets: [{
+              label: "Attendance (%)",
+              data: [85, 90, 80, 95], // Dummy values (update with real data later)
+              backgroundColor: "#2196F3",
+              borderWidth: 2,
+              borderColor: "#000",
+              hoverBorderWidth: 4
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  max: 100,
+                  ticks: { stepSize: 10 }
+              }
+          }
+      }
+  });
+}
+
+// 🎯 Top & Bottom Performers Table
+function renderPerformanceTable() {
+  const tableBody = document.querySelector("#performanceTable tbody");
+  const performers = [
+      { name: "Alice", grade: "A" },
+      { name: "Bob", grade: "B" },
+      { name: "Charlie", grade: "F" },
+      { name: "David", grade: "C" },
+      { name: "Eve", grade: "D" }
+  ];
+  tableBody.innerHTML = "";
+  performers.forEach(p => {
+      const row = `<tr><td>${p.name}</td><td>${p.grade}</td></tr>`;
+      tableBody.innerHTML += row;
+  });
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lecturer Dashboard</title>
+  <link rel="stylesheet" href="css/lecturer_dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <h2>Lecturer Panel</h2>
+      <ul>
+        <li class="nav-item active" onclick="showSection('dashboard')">🏠 Dashboard</li>
+        <li class="nav-item" onclick="showSection('manageGrades')">📊 Manage Grades</li>
+        <li class="nav-item" onclick="showSection('manageAttendance')">✅ Manage Attendance</li>
+        <li class="nav-item" onclick="showSection('analytics')">📈 Analytics</li>
+        <li class="nav-item" onclick="showSection('exportReports')">📂 Export Reports</li>
+      </ul>
+      <button class="logout-btn">🚪 Logout</button>
+      <button id="toggleSidebar" class="toggle-btn">☰</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Course & Class Selection Section -->
+      <div id="courseClassSelection" class="section active">
+        <h2>Select Course and Class</h2>
+        <form id="courseClassForm">
+          <label for="courseSelect">Course/Unit:</label>
+          <select id="courseSelect" required>
+            <option value="">-- Select Course --</option>
+            <option value="course1">Course 1</option>
+            <option value="course2">Course 2</option>
+            <option value="course3">Course 3</option>
+          </select>
+          <br>
+          <label for="classSelect">Class/Year Group:</label>
+          <select id="classSelect" required>
+            <option value="">-- Select Class --</option>
+            <option value="year1">Year 1</option>
+            <option value="year2">Year 2</option>
+            <option value="year3">Year 3</option>
+            <option value="year4">Year 4</option>
+            <option value="year5">Year 5</option>
+            <option value="year6">Year 6</option>
+          </select>
+          <br>
+          <button type="submit">Load Data</button>
+        </form>
+      </div>
+
+      <!-- Dashboard Overview Section -->
+      <section id="dashboard" class="section">
+        <h2>Dashboard Overview</h2>
+        <p>Welcome to the Lecturer Dashboard. Here you can manage grades, attendance, and view analytics.</p>
+      </section>
+
+      <!-- Manage Grades Section -->
+      <section id="manageGrades" class="section">
+        <h2>Manage Grades</h2>
+        <form id="gradeForm">
+          <label for="studentSelect">Student:</label>
+          <select id="studentSelect" required>
+            <option value="">-- Select Student --</option>
+            <!-- Populate dynamically -->
+          </select>
+          <br>
+          <label for="gradeInput">Grade:</label>
+          <input type="text" id="gradeInput" required>
+          <br>
+          <button type="submit">Submit Grade</button>
+        </form>
+        <h3>Existing Grades</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Grade</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="gradesTable">
+            <!-- Dynamic data will be inserted here -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Manage Attendance Section -->
+      <section id="manageAttendance" class="section">
+        <h2>Manage Attendance</h2>
+        <form id="attendanceForm">
+          <label for="attendanceStudentSelect">Student:</label>
+          <select id="attendanceStudentSelect" required>
+            <option value="">-- Select Student --</option>
+            <!-- Populate dynamically -->
+          </select>
+          <br>
+          <label for="attendanceStatus">Attendance:</label>
+          <select id="attendanceStatus" required>
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+          </select>
+          <br>
+          <button type="submit">Update Attendance</button>
+        </form>
+        <h3>Attendance Records</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTable">
+            <!-- Dynamic data will be inserted here -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="section">
+        <h2>Analytics</h2>
+        <div class="chart-container">
+          <canvas id="gradeDistributionChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="attendanceTrendChart"></canvas>
+        </div>
+        <h3>Top & Bottom Performers</h3>
+        <table id="performanceTable">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dynamic data goes here -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Export Reports Section -->
+      <section id="exportReports" class="section">
+        <h2>Export Reports</h2>
+        <button id="exportPDF">Download PDF</button>
+        <button id="exportCSV">Download CSV</button>
+      </section>
+    </div>
+  </div>
+  <script src="js/lecturer_dashboard.js"></script>
+</body>
+</html>
+
+// student_dashboard.js
+document.addEventListener('DOMContentLoaded', function() {
+  // Configuration
+  let CURRENT_STUDENT_ID = null;
+
+async function getLoggedInStudent() {
+    try {
+        const response = await fetch(`${BASE_URL}get_current_student.php`);
+        const data = await response.json();
+        if (data.student_id) {
+            CURRENT_STUDENT_ID = data.student_id;
+        } else {
+            // Handle not logged in (redirect to login page)
+            window.location.href = 'index.html'; 
+        }
+    } catch (error) {
+        console.error('Error fetching student ID:', error);
+        // Handle error
+    }
+}
+  
+  // Initialize dashboard
+  initDashboard();
+
+  async function initDashboard() {
+      setupEventListeners();
+      await loadStudentProfile(STUDENT_ID);
+      await loadAnalyticsData(STUDENT_ID);
+  }
+
+  // --- Data Loading Functions ---
+  async function loadStudentProfile(studentId) {
+      try {
+          const response = await fetch(`${BASE_URL}get_students.php`);
+          const data = await response.json();
+          
+          // Find current student (matching your SQL structure)
+          const student = data.students.find(s => s.student_id == studentId);
+          
+          if (student) {
+              document.getElementById('studentId').textContent = student.student_id;
+              document.getElementById('studentName').textContent = student.name;
+              document.getElementById('studentCourse').textContent = student.course || 'Not specified';
+              document.getElementById('studentEmail').textContent = student.email;
+          }
+      } catch (error) {
+          console.error('Profile load error:', error);
+          showError('profile', 'Failed to load profile data');
+      }
+  }
+
+  async function loadAnalyticsData(studentId) {
+    try {
+        const [gradesRes, attendanceRes] = await Promise.all([
+            fetch(`${BASE_URL}get_grades.php`),
+            fetch(`${BASE_URL}get_attendance.php`)
+        ]);
+        
+        const gradesData = await gradesRes.json();
+        const attendanceData = await attendanceRes.json();
+        
+        // Filter for current student
+        const studentGrades = gradesData.data.filter(g => g.student_id == studentId);
+        const studentAttendance = attendanceData.attendance.filter(a => a.student_id == studentId);
+        
+        // Render all components
+        renderGradesPieChart(studentGrades);
+        populateGradesTable(studentGrades);  // <-- THIS WAS MISSING
+        renderAttendanceBarChart(studentAttendance);
+        updateAttendanceSummary(studentAttendance);
+        
+    } catch (error) {
+        console.error('Analytics load error:', error);
+        showError('analytics', 'Failed to load analytics data');
+    }
+}
+
+  // --- Visualization Functions ---
+  function renderGradesPieChart(gradesData) {
+    const ctx = document.getElementById('gradesChart').getContext('2d');
+    
+    // Extract data EXACTLY as in your grades table
+    const subjects = gradesData.map(g => g.subject);
+    const grades = gradesData.map(g => g.grade);
+    
+    // Color coding
+    const gradeColors = {
+        'A': '#2ecc71',  // Green
+        'B': '#3498db',   // Blue
+        'C': '#f1c40f',   // Yellow
+        'D': '#e67e22',   // Orange
+        'F': '#e74c3c'    // Red
+    };
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: subjects,  // Shows "Web Programming", "Database Systems", etc.
+            datasets: [{
+                data: gradesData.map(g => 1), // Equal slices (1 per subject)
+                backgroundColor: grades.map(g => gradeColors[g] || '#95a5a6'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${gradesData[context.dataIndex].grade}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+  function renderAttendanceBarChart(attendanceData) {
+      const ctx = document.getElementById('attendanceChart').getContext('2d');
+      
+      // Process attendance data (matching your attendance table)
+      const labels = attendanceData.map(a => new Date(a.date).toLocaleDateString());
+      const data = attendanceData.map(a => a.status === 'Present' ? 1 : 0);
+      const colors = attendanceData.map(a => a.status === 'Present' ? '#1cc88a' : '#e74a3b');
+      
+      new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: labels,
+              datasets: [{
+                  label: 'Attendance',
+                  data: data,
+                  backgroundColor: colors,
+                  borderColor: "#fff",
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      max: 1,
+                      ticks: {
+                          callback: function(value) {
+                              return value === 1 ? 'Present' : 'Absent';
+                          }
+                      }
+                  }
+              }
+          }
+      });
+  }
+
+  function updateAttendanceSummary(attendanceData) {
+      if (!attendanceData.length) {
+          document.getElementById('attendancePercentage').textContent = 'No data';
+          return;
+      }
+      
+      const presentCount = attendanceData.filter(a => a.status === 'Present').length;
+      const totalCount = attendanceData.length;
+      const percentage = Math.round((presentCount / totalCount) * 100);
+      
+      document.getElementById('attendancePercentage').textContent = `${percentage}%`;
+      
+      const badge = document.getElementById('eligibilityBadge');
+      badge.textContent = percentage >= ATTENDANCE_THRESHOLD ? 'Eligible' : 'Not Eligible';
+      badge.className = 'eligibility-badge ' + 
+          (percentage >= ATTENDANCE_THRESHOLD ? 'eligible' : 'not-eligible');
+  }
+
+  // --- Helper Functions ---
+  function setupEventListeners() {
+      // Navigation toggle
+      document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', function() {
+              const sectionId = this.dataset.section;
+              toggleActiveSection(sectionId);
+          });
+      });
+
+      // Logout button
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+          window.location.href = `${BASE_URL}logout.php`;
+      });
+  }
+
+  function toggleActiveSection(sectionId) {
+      // Update navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+          item.classList.remove('active');
+      });
+      document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+      
+      // Update content sections
+      document.querySelectorAll('.section').forEach(section => {
+          section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+  }
+
+  function showError(sectionId, message) {
+      const section = document.getElementById(sectionId);
+      const errorElement = document.createElement('div');
+      errorElement.className = 'error-message';
+      errorElement.textContent = message;
+      section.appendChild(errorElement);
+  }
+});
+function populateGradesTable(gradesData) {
+  const tableBody = document.getElementById('gradesTableBody');
+  
+  // Clear any loading message or previous data
+  tableBody.innerHTML = '';
+  
+  // Check if data exists
+  if (!gradesData || gradesData.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="3" class="text-muted">No grade data available</td></tr>`;
+      return;
+  }
+  
+  // Sort by subject name (A-Z)
+  const sortedGrades = [...gradesData].sort((a, b) => a.subject.localeCompare(b.subject));
+  
+  // Create and append rows
+  sortedGrades.forEach(grade => {
+      const row = document.createElement('tr');
+      
+      // Format the grade with color coding
+      const gradeClass = grade.grade ? `grade-${grade.grade.toLowerCase()}` : '';
+      const gradeDisplay = grade.grade || 'N/A';
+      
+      row.innerHTML = `
+          <td>${grade.subject || 'No subject'}</td>
+          <td><span class="grade-badge ${gradeClass}">${gradeDisplay}</span></td>
+          <td>${getGradeRemarks(grade.grade)}</td>
+      `;
+      tableBody.appendChild(row);
+  });
+}
+
+function getGradeRemarks(grade) {
+  if (!grade) return 'No grade available';
+  
+  const remarks = {
+      'A': 'Excellent (5.0)',
+      'B': 'Good (4.0)',
+      'C': 'Satisfactory (3.0)',
+      'D': 'Poor (2.0)',
+      'F': 'Fail (0.0)'
+  };
+  return remarks[grade.toUpperCase()] || 'No remark available';
+}
+function exportGrades() {
+  const studentId = document.getElementById('studentId').textContent;
+  window.open(`${BASE_URL}export_grades.php?student_id=${studentId}`);
+}
+
+// Add event listener (in your setupEventListeners() function)
+document.getElementById('exportGradesBtn').addEventListener('click', exportGrades);

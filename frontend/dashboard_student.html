@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="css/student_dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+      <div class="nav-title">Student Dashboard</div>
+      <div class="profile-menu">
+        <div class="profile-circle"></div>
+        <div class="profile-dropdown">
+          <div class="dropdown-header">
+            <span class="name">Loading...</span>
+            <span class="email">Loading...</span>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="user_settings.html" class="dropdown-item">
+            <i class="fas fa-cog"></i> Settings
+          </a>
+          <div class="dropdown-item logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+      <h2>Student Portal</h2>
+      <ul>
+        <li class="nav-item active" data-section="analytics">
+          <i class="fas fa-chart-line"></i> Analytics
+        </li>
+        <li class="nav-item" data-section="export">
+          <i class="fas fa-file-export"></i> Export Data
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Analytics Section -->
+      <section id="analytics" class="section active">
+        <div class="section-header">
+          <h2>Academic Analytics</h2>
+        </div>
+        
+        <div class="analytics-grid">
+          <!-- Grades Chart -->
+          <div class="analytics-card">
+            <h3>Grade Distribution</h3>
+            <div class="chart-container">
+              <canvas id="gradesChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Attendance Chart -->
+          <div class="analytics-card">
+            <h3>Attendance Overview</h3>
+            <div class="chart-container">
+              <canvas id="attendanceChart"></canvas>
+            </div>
+            <div class="attendance-summary">
+              <!-- Will be populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Grades Table -->
+        <div class="analytics-card">
+          <h3>Detailed Grades</h3>
+          <div class="table-responsive">
+            <table id="gradesTable">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Score</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export Section -->
+      <section id="export" class="section">
+        <div class="section-header">
+          <h2>Export Data</h2>
+        </div>
+        <div class="export-grid">
+          <div class="analytics-card">
+            <h3>Download Reports</h3>
+            <div class="export-options">
+              <button class="btn-primary">
+                <i class="fas fa-file-pdf"></i> Export Grades Report
+              </button>
+              <button class="btn-primary">
+                <i class="fas fa-file-pdf"></i> Export Attendance Report
+              </button>
+              <button class="btn-primary">
+                <i class="fas fa-file-csv"></i> Export Full Report (CSV)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/student_dashboard.js"></script>
+</body>
+</html>

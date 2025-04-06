@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIS Registration</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    .form-group.invalid .error-message {
+      display: block;
+    }
+    .form-group.invalid input,
+    .form-group.invalid select {
+      border-color: #e74c3c;
+    }
+    .form-message {
+      margin: 1rem 0;
+      padding: 0.5rem;
+      border-radius: 4px;
+      display: none;
+    }
+    .form-message.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .form-message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-form">
+      <h1>Create Account</h1>
+      <p>Register a new SIS user</p>
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" required placeholder="John Doe">
+          <span class="error-message" id="nameError"></span>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required placeholder="example@domain.com">
+          <span class="error-message" id="emailError"></span>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required placeholder="Create a strong password">
+          <span class="error-message" id="passwordError"></span>
+        </div>
+        <div class="form-group" id="courseGroup">
+          <label for="course">Course</label>
+          <select id="course">
+            <option value="">-- Select Course --</option>
+            <option value="BBIT">BBIT</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Software Engineering">Software Engineering</option>
+            <option value="Computer Technology">Computer Technology</option>
+          </select>
+          <span class="error-message" id="courseError"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="role">User Role</label>
+          <select id="role" required>
+            <option value="">-- Select Role --</option>
+            <option value="student">Student</option>
+            <option value="lecturer">Lecturer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <span class="error-message" id="roleError"></span>
+        </div>
+        <button type="submit">Register</button>
+        <div class="form-message" id="formMessage"></div>
+      </form>
+      <div class="register-link">
+        <p>Already have an account? <a href="index.html">Login here</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Safely get all form elements
+      const registerForm = document.getElementById('registerForm');
+      const roleSelect = document.getElementById('role');
+      const courseGroup = document.getElementById('courseGroup');
+      const formMessage = document.getElementById('formMessage');
+
+      // Check if essential elements exist
+      if (!registerForm || !roleSelect || !courseGroup || !formMessage) {
+        console.error('One or more form elements are missing from the DOM');
+        return;
+      }
+
+      // Role change handler
+      roleSelect.addEventListener('change', function() {
+        courseGroup.style.display = this.value === 'student' ? 'block' : 'none';
+      });
+
+      // Initialize course group visibility
+      courseGroup.style.display = 'none';
+
+      // Form submission handler
+      registerForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Reset previous errors and messages
+        clearErrors();
+        hideMessage();
+        
+        // Get form values with null checks
+        const formData = {
+          name: document.getElementById('name')?.value.trim() || '',
+          email: document.getElementById('email')?.value.trim() || '',
+          password: document.getElementById('password')?.value.trim() || '',
+          role: document.getElementById('role')?.value || '',
+          course: document.getElementById('course')?.value || ''
+        };
+
+        // Validate form
+        if (!validateForm(formData)) {
+          return;
+        }
+
+        try {
+          // Disable submit button during request
+          const submitBtn = registerForm.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+          }
+
+          // Send registration request
+          const response = await fetch('http://localhost/sis-master/backend/register.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+
+          // Handle response
+          const responseText = await response.text();
+          let data;
+          
+          try {
+            data = JSON.parse(responseText);
+          } catch (e) {
+            throw new Error('Invalid server response format');
+          }
+
+          if (!response.ok) {
+            throw new Error(data.message || 'Registration failed');
+          }
+
+          // Show success message
+          showMessage('Registration successful! Redirecting to login...', 'success');
+          
+          // Redirect after delay
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+
+        } catch (error) {
+          showMessage(error.message, 'error');
+          console.error('Registration error:', error);
+        } finally {
+          const submitBtn = registerForm.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Register';
+          }
+        }
+      });
+
+      // Helper functions
+      function validateForm(data) {
+        let isValid = true;
+
+        // Name validation
+        if (!data.name) {
+          showError('name', 'Full name is required');
+          isValid = false;
+        }
+
+        // Email validation
+        if (!data.email) {
+          showError('email', 'Email is required');
+          isValid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+          showError('email', 'Please enter a valid email');
+          isValid = false;
+        }
+
+        // Password validation
+        if (!data.password) {
+          showError('password', 'Password is required');
+          isValid = false;
+        } else if (data.password.length < 8) {
+          showError('password', 'Password must be at least 8 characters');
+          isValid = false;
+        }
+
+        // Role validation
+        if (!data.role) {
+          showError('role', 'Please select a role');
+          isValid = false;
+        }
+
+        // Course validation (only for students)
+        if (data.role === 'student' && !data.course) {
+          showError('course', 'Course is required for students');
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      function showError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(`${fieldId}Error`);
+        
+        if (field && errorElement) {
+          field.closest('.form-group').classList.add('invalid');
+          errorElement.textContent = message;
+        }
+      }
+
+      function clearErrors() {
+        document.querySelectorAll('.form-group').forEach(group => {
+          group.classList.remove('invalid');
+        });
+      }
+
+      function showMessage(message, type) {
+        if (formMessage) {
+          formMessage.textContent = message;
+          formMessage.className = `form-message ${type}`;
+          formMessage.style.display = 'block';
+        }
+      }
+
+      function hideMessage() {
+        if (formMessage) {
+          formMessage.style.display = 'none';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
