@@ -15,11 +15,11 @@ foreach ($required as $field) {
 }
 
 // Extract and sanitize inputs
-$name = htmlspecialchars($input['name']);
+$name = mysqli_real_escape_string($conn, $input['name']);
 $email = filter_var($input['email'], FILTER_VALIDATE_EMAIL);
 $password = $input['password'];
-$role = $input['role'];
-$course = $input['course'] ?? null;
+$role = mysqli_real_escape_string($conn, $input['role']);
+$course = isset($input['course']) ? mysqli_real_escape_string($conn, $input['course']) : null;
 
 // Validate role
 $validRoles = ['student', 'lecturer', 'admin'];
@@ -31,10 +31,10 @@ if (!in_array($role, $validRoles)) {
 
 try {
     // Check if email exists
-    $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
+    $check_email = "SELECT user_id FROM users WHERE email = '$email'";
+    $result = mysqli_query($conn, $check_email);
     
-    if ($stmt->rowCount() > 0) {
+    if (mysqli_num_rows($result) > 0) {
         http_response_code(409);
         echo json_encode(["success" => false, "message" => "Email already exists"]);
         exit;
@@ -44,22 +44,26 @@ try {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Start transaction
-    $conn->beginTransaction();
+    mysqli_begin_transaction($conn);
 
     // Insert into users table
-    $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $hashedPassword, $role]);
-    $user_id = $conn->lastInsertId();
+    $insert_user = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$hashedPassword', '$role')";
+    if (!mysqli_query($conn, $insert_user)) {
+        throw new Exception(mysqli_error($conn));
+    }
+    $user_id = mysqli_insert_id($conn);
 
     // For students, insert into students table
     if ($role === 'student') {
-        $stmt = $conn->prepare("INSERT INTO students (user_id, name, email, course) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $name, $email, $course]);
-        $student_id = $conn->lastInsertId();
+        $insert_student = "INSERT INTO students (user_id, name, email, course) VALUES ('$user_id', '$name', '$email', '$course')";
+        if (!mysqli_query($conn, $insert_student)) {
+            throw new Exception(mysqli_error($conn));
+        }
+        $student_id = mysqli_insert_id($conn);
     }
 
     // Commit transaction
-    $conn->commit();
+    mysqli_commit($conn);
 
     // Prepare response data
     $response = [
@@ -81,9 +85,11 @@ try {
 
     echo json_encode($response);
 
-} catch (PDOException $e) {
-    $conn->rollBack();
+} catch (Exception $e) {
+    mysqli_rollback($conn);
     http_response_code(500);
     echo json_encode(["success" => false, "message" => "Registration failed", "error" => $e->getMessage()]);
 }
+
+mysqli_close($conn);
 ?>

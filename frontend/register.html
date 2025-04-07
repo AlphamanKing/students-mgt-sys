@@ -5,33 +5,193 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SIS Registration</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+
+    .login-form h1 {
+      color: #333;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .login-form p {
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e1e1e1;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #667eea;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group input::placeholder {
+      color: #999;
+    }
+
     .error-message {
       color: #e74c3c;
-      font-size: 0.8rem;
-      margin-top: 0.25rem;
+      font-size: 12px;
+      margin-top: 5px;
       display: none;
+      padding-left: 5px;
     }
+
     .form-group.invalid .error-message {
       display: block;
     }
+
     .form-group.invalid input,
     .form-group.invalid select {
       border-color: #e74c3c;
     }
-    .form-message {
-      margin: 1rem 0;
-      padding: 0.5rem;
-      border-radius: 4px;
-      display: none;
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
     }
+
+    button[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button[type="submit"]:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .form-message {
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      text-align: center;
+    }
+
     .form-message.success {
       background-color: #d4edda;
       color: #155724;
+      border: 1px solid #c3e6cb;
     }
+
     .form-message.error {
       background-color: #f8d7da;
       color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .register-link {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .register-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .register-link a:hover {
+      color: #764ba2;
+    }
+
+    /* Loading animation for submit button */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-left: 8px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+      }
+
+      .login-form h1 {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
@@ -39,16 +199,16 @@
   <div class="login-container">
     <div class="login-form">
       <h1>Create Account</h1>
-      <p>Register a new SIS user</p>
+      <p>Join our Student Information System</p>
       <form id="registerForm">
         <div class="form-group">
           <label for="name">Full Name</label>
-          <input type="text" id="name" required placeholder="John Doe">
+          <input type="text" id="name" required placeholder="Enter your full name">
           <span class="error-message" id="nameError"></span>
         </div>
         <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="example@domain.com">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" required placeholder="Enter your email">
           <span class="error-message" id="emailError"></span>
         </div>
         <div class="form-group">
@@ -59,7 +219,7 @@
         <div class="form-group" id="courseGroup">
           <label for="course">Course</label>
           <select id="course">
-            <option value="">-- Select Course --</option>
+            <option value="">Select your course</option>
             <option value="BBIT">BBIT</option>
             <option value="Computer Science">Computer Science</option>
             <option value="Information Technology">Information Technology</option>
@@ -72,14 +232,14 @@
         <div class="form-group">
           <label for="role">User Role</label>
           <select id="role" required>
-            <option value="">-- Select Role --</option>
+            <option value="">Select your role</option>
             <option value="student">Student</option>
             <option value="lecturer">Lecturer</option>
             <option value="admin">Admin</option>
           </select>
           <span class="error-message" id="roleError"></span>
         </div>
-        <button type="submit">Register</button>
+        <button type="submit">Create Account</button>
         <div class="form-message" id="formMessage"></div>
       </form>
       <div class="register-link">
@@ -90,35 +250,28 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Safely get all form elements
       const registerForm = document.getElementById('registerForm');
       const roleSelect = document.getElementById('role');
       const courseGroup = document.getElementById('courseGroup');
       const formMessage = document.getElementById('formMessage');
 
-      // Check if essential elements exist
       if (!registerForm || !roleSelect || !courseGroup || !formMessage) {
         console.error('One or more form elements are missing from the DOM');
         return;
       }
 
-      // Role change handler
       roleSelect.addEventListener('change', function() {
         courseGroup.style.display = this.value === 'student' ? 'block' : 'none';
       });
 
-      // Initialize course group visibility
       courseGroup.style.display = 'none';
 
-      // Form submission handler
       registerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Reset previous errors and messages
         clearErrors();
         hideMessage();
         
-        // Get form values with null checks
         const formData = {
           name: document.getElementById('name')?.value.trim() || '',
           email: document.getElementById('email')?.value.trim() || '',
@@ -127,20 +280,18 @@
           course: document.getElementById('course')?.value || ''
         };
 
-        // Validate form
         if (!validateForm(formData)) {
           return;
         }
 
         try {
-          // Disable submit button during request
           const submitBtn = registerForm.querySelector('button[type="submit"]');
           if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Registering...';
+            submitBtn.textContent = 'Creating Account...';
+            submitBtn.classList.add('loading');
           }
 
-          // Send registration request
           const response = await fetch('http://localhost/sis-master/backend/register.php', {
             method: 'POST',
             headers: {
@@ -149,7 +300,6 @@
             body: JSON.stringify(formData)
           });
 
-          // Handle response
           const responseText = await response.text();
           let data;
           
@@ -163,10 +313,8 @@
             throw new Error(data.message || 'Registration failed');
           }
 
-          // Show success message
-          showMessage('Registration successful! Redirecting to login...', 'success');
+          showMessage('Account created successfully! Redirecting to login...', 'success');
           
-          // Redirect after delay
           setTimeout(() => {
             window.location.href = 'index.html';
           }, 2000);
@@ -178,22 +326,20 @@
           const submitBtn = registerForm.querySelector('button[type="submit"]');
           if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Register';
+            submitBtn.textContent = 'Create Account';
+            submitBtn.classList.remove('loading');
           }
         }
       });
 
-      // Helper functions
       function validateForm(data) {
         let isValid = true;
 
-        // Name validation
         if (!data.name) {
           showError('name', 'Full name is required');
           isValid = false;
         }
 
-        // Email validation
         if (!data.email) {
           showError('email', 'Email is required');
           isValid = false;
@@ -202,7 +348,6 @@
           isValid = false;
         }
 
-        // Password validation
         if (!data.password) {
           showError('password', 'Password is required');
           isValid = false;
@@ -211,13 +356,11 @@
           isValid = false;
         }
 
-        // Role validation
         if (!data.role) {
           showError('role', 'Please select a role');
           isValid = false;
         }
 
-        // Course validation (only for students)
         if (data.role === 'student' && !data.course) {
           showError('course', 'Course is required for students');
           isValid = false;
